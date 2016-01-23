@@ -24,6 +24,7 @@ public class EntityBuilder {
         if (getCustomName() != null) {
             entity.setCustomName(getCustomName());
         }
+        entity.setCustomNameVisible(getCustomNameVisible());
         return entity;
     }
 

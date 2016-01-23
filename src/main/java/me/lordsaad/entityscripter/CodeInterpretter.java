@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 public class CodeInterpretter {
 
     private File file;
-    private YamlConfiguration yml;
     private static BiMap<String, String[]> modules = HashBiMap.create();
     private List<String> lines = new ArrayList<>();
     private String text;
@@ -31,7 +30,6 @@ public class CodeInterpretter {
     public CodeInterpretter(File file) {
         this.file = file;
         getLines();
-        yml = YamlConfiguration.loadConfiguration(file);
         getModules();
     }
 
@@ -84,5 +82,6 @@ public class CodeInterpretter {
                 }
             }
         }
+        builder.build();
     }
 }

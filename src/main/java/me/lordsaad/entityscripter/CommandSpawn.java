@@ -25,7 +25,7 @@ public class CommandSpawn implements CommandExecutor {
             if (sender instanceof Player) {
                 if (sender.hasPermission("entityscripter.spawn")) {
                     if (args.length >= 1) {
-                        File f = new File(instance().getDataFolder(), "/mobs/" + args[0]);
+                        File f = new File(instance().getDataFolder(), "/mobs/" + args[0] + ".txt");
                         CodeInterpretter.interpretCode(((Player) sender).getLocation());
                     }
                 } else {
