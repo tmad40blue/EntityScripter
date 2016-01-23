@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.github.bergerhealer:BKCommonLib:52df556f14">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/bergerhealer/BKCommonLib/52df556f14/BKCommonLib-52df556f14.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/bergerhealer/BKCommonLib/52df556f14/BKCommonLib-52df556f14-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/bergerhealer/BKCommonLib/52df556f14/BKCommonLib-52df556f14-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
