@@ -3,7 +3,6 @@ package me.lordsaad.entityscripter;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.bukkit.Location;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
@@ -20,14 +19,14 @@ import java.util.stream.Stream;
 /**
  * Created by Saad on 1/23/2016.
  */
-public class CodeInterpretter {
+public class CodeInterpreter {
 
     private File file;
     private static BiMap<String, String[]> modules = HashBiMap.create();
     private List<String> lines = new ArrayList<>();
     private String text;
 
-    public CodeInterpretter(File file) {
+    public CodeInterpreter(File file) {
         this.file = file;
         getLines();
         getModules();
@@ -57,7 +56,7 @@ public class CodeInterpretter {
         return modules;
     }
 
-    public static void interpretCode(Location loc) {
+    public void interpretCode(Location loc) {
         EntityBuilder builder = new EntityBuilder(loc);
         for (String heads : modules.keySet()) {
             for (String line : modules.get(heads)) {
@@ -65,7 +64,7 @@ public class CodeInterpretter {
 
                 if (heads.equalsIgnoreCase("properties")) {
                     if (option[0].equalsIgnoreCase("set_entity_type")) {
-                        builder.setEntityType(EntityType.valueOf(option[1]));
+                        builder.setEntityType(EntityType.fromName(option[1]));
                     }
 
                     if (option[0].equalsIgnoreCase("set_custom_name")) {

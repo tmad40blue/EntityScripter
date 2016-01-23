@@ -7,7 +7,10 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class EntityScripter extends JavaPlugin {
 
+    public static EntityScripter plugin;
+
     public void onEnable() {
+        plugin = this;
         saveDefaultConfig();
         getCommand("spawnmob").setExecutor(new CommandSpawn());
     }
