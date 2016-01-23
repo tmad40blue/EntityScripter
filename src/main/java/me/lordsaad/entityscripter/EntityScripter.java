@@ -8,7 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class EntityScripter extends JavaPlugin {
 
     public void onEnable() {
-
+        getCommand("spawnmob").setExecutor(new CommandSpawn());
     }
 
     public void onDisable() {
