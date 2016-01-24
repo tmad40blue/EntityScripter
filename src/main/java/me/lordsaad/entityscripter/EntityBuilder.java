@@ -21,13 +21,13 @@ public class EntityBuilder {
 
     public Entity build() {
         Entity entity = loc.getWorld().spawnEntity(loc, getEntityType());
-        if (getCustomName() != null) {
-            entity.setCustomName(getCustomName());
-        }
+
+        if (getCustomName() != null) entity.setCustomName(getCustomName());
+
         entity.setCustomNameVisible(getCustomNameVisible());
-        if (noAI) {
-            NBTUtils.addEntityTag(entity, "NoAI", 1);
-        }
+
+        if (getNoAI()) NBTUtils.addEntityTag(entity, "NoAI", 1);
+
 
         return entity;
     }

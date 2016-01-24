@@ -5,6 +5,8 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.io.File;
@@ -25,75 +27,56 @@ import java.util.stream.Stream;
 public class CodeInterpreter {
 
     private File file;
+    private YamlConfiguration yml = YamlConfiguration.loadConfiguration(file);
     private static BiMap<String, List<String>> modules = HashBiMap.create();
     private List<String> lines = new ArrayList<>();
     private String text;
 
     public CodeInterpreter(File file) {
         this.file = file;
-        getLines();
-        getModules();
-    }
-
-    private void getLines() {
-        try {
-            try (Stream<String> line = Files.lines(Paths.get(file.toURI()), Charset.defaultCharset())) {
-                line.forEachOrdered(lin -> lines.add(lin));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        text = Joiner.on("\n").skipNulls().join(lines);
-    }
-
-    public BiMap<String, List<String>> getModules() {
-        List<String> heads = lines.stream().filter(line -> line.startsWith("#")).collect(Collectors.toList());
-        for (String head : heads) {
-            lines.remove(head);
-        }
-
-        Bukkit.broadcastMessage(Arrays.toString(text.split("#")));
-        for (String slice : text.split("#")) {
-            if (slice != null && !slice.isEmpty() && !slice.equalsIgnoreCase("end")) {
-                String[] subSlices = slice.split("\n", 2);
-                if (subSlices[1] != null && !subSlices[1].isEmpty()) {
-
-                    List<String> code = new ArrayList<>();
-                    Collections.addAll(code, subSlices[1].split("\n"));
-
-                    modules.put(subSlices[0], code);
-                }
-            }
-        }
-
-        return modules;
     }
 
     public void interpretCode(Location loc) {
         EntityBuilder builder = new EntityBuilder(loc);
-        for (String heads : modules.keySet()) {
-            modules.get(heads).stream().filter(line -> line != null).forEach(line -> {
-                String[] option = line.split(":\\s");
+        if (yml.contains("properties")) {
+            for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
 
-                if (heads.equalsIgnoreCase("properties")) {
-                    if (option[0].equalsIgnoreCase("set_entity_type")) {
-                        builder.setEntityType(EntityType.valueOf(option[1].toUpperCase()));
-                    }
-
-                    if (option[0].equalsIgnoreCase("set_custom_name")) {
-                        builder.setCustomName(option[1]);
-                    }
-
-                    if (option[0].equalsIgnoreCase("set_no_ai")) {
-                        builder.setNoAI(Boolean.parseBoolean(option[1]));
-                    }
-
-                    if (option[0].equalsIgnoreCase("set_custom_name_visible")) {
-                        builder.setCustomNameVisible(Boolean.parseBoolean(option[1]));
-                    }
+                if (property.equalsIgnoreCase("set_entity_type")) {
+                    builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
                 }
-            });
+
+                if (property.equalsIgnoreCase("set_custom_name")) {
+                    builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_custom_name").toUpperCase()));
+                }
+
+                if (property.equalsIgnoreCase("set_entity_type")) {
+                    builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
+                }
+
+                if (property.equalsIgnoreCase("set_entity_type")) {
+                    builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
+                }
+
+            }
         }
         builder.build();
+    }
+
+    public void matcher(String key, Entity entity) {
+        if (key.equalsIgnoreCase("set_entity_type")) {
+            builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
+        }
+
+        if (key.equalsIgnoreCase("set_custom_name")) {
+            builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_custom_name").toUpperCase()));
+        }
+
+        if (key.equalsIgnoreCase("set_entity_type")) {
+            builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
+        }
+
+        if (key.equalsIgnoreCase("set_entity_type")) {
+            builder.setEntityType(EntityType.valueOf(yml.getString("properties.set_entity_type").toUpperCase()));
+        }
     }
 }
