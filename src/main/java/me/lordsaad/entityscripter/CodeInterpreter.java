@@ -1,7 +1,9 @@
 package me.lordsaad.entityscripter;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 
@@ -11,8 +13,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +25,7 @@ import java.util.stream.Stream;
 public class CodeInterpreter {
 
     private File file;
-    private static BiMap<String, String[]> modules = HashBiMap.create();
+    private static BiMap<String, List<String>> modules = HashBiMap.create();
     private List<String> lines = new ArrayList<>();
     private String text;
 
@@ -35,22 +38,32 @@ public class CodeInterpreter {
     private void getLines() {
         try {
             try (Stream<String> line = Files.lines(Paths.get(file.toURI()), Charset.defaultCharset())) {
-                line.forEachOrdered(lin -> {
-                    lines.add(lin);
-                    text = text + "\n" + line;
-                });
+                line.forEachOrdered(lin -> lines.add(lin));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        text = Joiner.on("\n").skipNulls().join(lines);
     }
 
-    public BiMap<String, String[]> getModules() {
+    public BiMap<String, List<String>> getModules() {
         List<String> heads = lines.stream().filter(line -> line.startsWith("#")).collect(Collectors.toList());
+        for (String head : heads) {
+            lines.remove(head);
+        }
 
-        for (int i = 0; i < heads.size(); i = i + 2) {
-            String code = Pattern.quote(heads.get(i)) + "(.*?)" + Pattern.quote(heads.get(i++));
-            modules.put(heads.get(i), code.split(";"));
+        Bukkit.broadcastMessage(Arrays.toString(text.split("#")));
+        for (String slice : text.split("#")) {
+            if (slice != null && !slice.isEmpty() && !slice.equalsIgnoreCase("end")) {
+                String[] subSlices = slice.split("\n", 2);
+                if (subSlices[1] != null && !subSlices[1].isEmpty()) {
+
+                    List<String> code = new ArrayList<>();
+                    Collections.addAll(code, subSlices[1].split("\n"));
+
+                    modules.put(subSlices[0], code);
+                }
+            }
         }
 
         return modules;
@@ -59,12 +72,12 @@ public class CodeInterpreter {
     public void interpretCode(Location loc) {
         EntityBuilder builder = new EntityBuilder(loc);
         for (String heads : modules.keySet()) {
-            for (String line : modules.get(heads)) {
-                String[] option = line.split(": ");
+            modules.get(heads).stream().filter(line -> line != null).forEach(line -> {
+                String[] option = line.split(":\\s");
 
                 if (heads.equalsIgnoreCase("properties")) {
                     if (option[0].equalsIgnoreCase("set_entity_type")) {
-                        builder.setEntityType(EntityType.fromName(option[1]));
+                        builder.setEntityType(EntityType.valueOf(option[1].toUpperCase()));
                     }
 
                     if (option[0].equalsIgnoreCase("set_custom_name")) {
@@ -79,7 +92,7 @@ public class CodeInterpreter {
                         builder.setCustomNameVisible(Boolean.parseBoolean(option[1]));
                     }
                 }
-            }
+            });
         }
         builder.build();
     }

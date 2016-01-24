@@ -9,10 +9,10 @@ import org.bukkit.entity.EntityType;
  */
 public class EntityBuilder {
 
-    private EntityType entityType;
-    private String customName;
-    private boolean customNameVisible;
-    private boolean noAI;
+    private EntityType entityType = EntityType.ZOMBIE;
+    private String customName = null;
+    private boolean customNameVisible = false;
+    private boolean noAI = false;
     private Location loc;
 
     public EntityBuilder(Location loc) {
@@ -25,6 +25,10 @@ public class EntityBuilder {
             entity.setCustomName(getCustomName());
         }
         entity.setCustomNameVisible(getCustomNameVisible());
+        if (noAI) {
+            NBTUtils.addEntityTag(entity, "NoAI", 1);
+        }
+
         return entity;
     }
 
