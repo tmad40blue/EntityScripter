@@ -8,6 +8,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class EntityBuilder {
     private List<PotionEffect> potionEffects = new ArrayList<>();
     private BiMap<String, Integer> customIntNBT = HashBiMap.create();
     private BiMap<String, String> customStringNBT = HashBiMap.create();
+    private File file;
+
 
     public EntityBuilder() {
     }
@@ -33,9 +36,10 @@ public class EntityBuilder {
     }
 
     public Entity spawn() {
-        if (location != null) {
+        if (location != null && file != null) {
             Entity entity = location.getWorld().spawnEntity(location, getEntityType());
             inject(entity);
+            EntityScripter.mobs.put(entity.getUniqueId(), file);
             return entity;
 
         } else return null;
@@ -122,6 +126,14 @@ public class EntityBuilder {
 
     public void setSilent(boolean silent) {
         this.silent = silent;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
     }
 
     public void addCustomNBT(String nbt, String value) {
