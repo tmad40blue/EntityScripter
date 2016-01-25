@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -35,11 +36,12 @@ public class CodeInterpreter {
         return builder;
     }
 
-    public void interpretTicks(EntityBuilder builder) {
+    public void interpretTicks(EntityBuilder builder, Entity entity) {
         if (yml.contains("tick")) {
             for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
                 matcher("tick.", property, builder);
-                secondaryMatcher("tick.", property, builder);
+                builder.inject(entity);
+                secondaryMatcher("tick.", property, entity);
             }
         }
     }
@@ -120,29 +122,28 @@ public class CodeInterpreter {
         }
     }
 
-    private void secondaryMatcher(String prefixPath, String key, EntityBuilder builder) {
+    private void secondaryMatcher(String prefixPath, String key, Entity entity) {
         if (key.equalsIgnoreCase("particles")) {
-            for (String particles : yml.getConfigurationSection(prefixPath + "paticles").getKeys(false)) {
+            for (String particles : yml.getConfigurationSection(prefixPath + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
-                for (String particle : yml.getConfigurationSection(prefixPath + "paticles." + particles).getKeys(false)) {
-                    String path = prefixPath + "particles." + particle + ".";
-                    double x = 0, y = 0, z = 0;
-                    int count = 10;
-                    float xd = 0, yd = 0, zd = 0, speed = 0;
-                    if (particle.equalsIgnoreCase("x")) x = yml.getDouble(path + "x");
-                    if (particle.equalsIgnoreCase("y")) y = yml.getDouble(path + "y");
-                    if (particle.equalsIgnoreCase("z")) z = yml.getDouble(path + "d");
-                    if (particle.equalsIgnoreCase("xd")) xd = (float) yml.getDouble(path + "xd");
-                    if (particle.equalsIgnoreCase("yd")) yd = (float) yml.getDouble(path + "yd");
-                    if (particle.equalsIgnoreCase("zd")) zd = (float) yml.getDouble(path + "zd");
-                    if (particle.equalsIgnoreCase("speed")) speed = (float) yml.getDouble(path + "speed");
-                    if (particle.equalsIgnoreCase("count")) count = yml.getInt(path + "count");
-                    Location location = new Location(builder.getLocation().getWorld()
-                            , builder.getLocation().getX() + x
-                            , builder.getLocation().getY() + y
-                            , builder.getLocation().getZ() + z);
-                    particleEffect.display(xd, yd, zd, speed, count, location, 100);
-                }
+
+                String path = prefixPath + "particles." + particles + ".";
+                double x = 0, y = 0, z = 0;
+                int count = 10;
+                float xd = 0, yd = 0, zd = 0, speed = 0;
+                if (yml.contains(path + "x")) x = yml.getDouble(path + "x");
+                if (yml.contains(path + "y")) y = yml.getDouble(path + "y");
+                if (yml.contains(path + "z")) z = yml.getDouble(path + "z");
+                if (yml.contains(path + "xd")) xd = (float) yml.getDouble(path + "xd");
+                if (yml.contains(path + "yd")) yd = (float) yml.getDouble(path + "yd");
+                if (yml.contains(path + "zd")) zd = (float) yml.getDouble(path + "zd");
+                if (yml.contains(path + "speed")) speed = (float) yml.getDouble(path + "speed");
+                if (yml.contains(path + "count")) count = yml.getInt(path + "count");
+                Location location = new Location(entity.getLocation().getWorld()
+                        , entity.getLocation().getX() + x
+                        , entity.getLocation().getY() + y
+                        , entity.getLocation().getZ() + z);
+                particleEffect.display(xd, yd, zd, speed, count, location, 100);
             }
         }
     }

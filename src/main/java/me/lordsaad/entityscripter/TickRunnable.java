@@ -13,7 +13,7 @@ public class TickRunnable extends BukkitRunnable {
         for (World world : Bukkit.getWorlds()) {
             world.getEntities().stream().filter(entity -> EntityScripter.mobs.containsKey(entity.getUniqueId())).forEach(entity -> {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
-                interpreter.interpretTicks(new EntityBuilder(entity));
+                interpreter.interpretTicks(new EntityBuilder(entity), entity);
             });
         }
     }
