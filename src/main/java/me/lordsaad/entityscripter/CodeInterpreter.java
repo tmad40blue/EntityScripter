@@ -29,12 +29,16 @@ public class CodeInterpreter {
         if (yml.contains("properties")) {
             for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
                 matcher("properties.", property, builder);
+                builder.spawn();
             }
         }
 
         if (yml.contains("tick")) {
-
+            for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
+                matcher("tick.", property, builder);
+            }
         }
+
         builder.spawn();
     }
 

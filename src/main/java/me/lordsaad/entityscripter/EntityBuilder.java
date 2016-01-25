@@ -1,6 +1,5 @@
 package me.lordsaad.entityscripter;
 
-import com.darkblade12.particleeffect.ParticleEffect;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.bukkit.Location;
