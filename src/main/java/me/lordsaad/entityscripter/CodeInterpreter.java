@@ -18,18 +18,18 @@ import java.io.File;
 public class CodeInterpreter {
 
     private File file;
-    private YamlConfiguration yml = YamlConfiguration.loadConfiguration(file);
+    private YamlConfiguration yml;
 
     public CodeInterpreter(File file) {
         this.file = file;
+        yml = YamlConfiguration.loadConfiguration(file);
     }
 
-    public void interpretCode() {
+    public EntityBuilder interpretCode() {
         EntityBuilder builder = new EntityBuilder();
         if (yml.contains("properties")) {
             for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
                 matcher("properties.", property, builder);
-                builder.spawn();
             }
         }
 
@@ -39,7 +39,7 @@ public class CodeInterpreter {
             }
         }
 
-        builder.spawn();
+        return builder;
     }
 
     private void matcher(String prefixPath, String key, EntityBuilder builder) {
@@ -50,14 +50,14 @@ public class CodeInterpreter {
         if (key.equalsIgnoreCase("set_custom_name"))
             builder.setCustomName(yml.getString(prefixPath + "set_custom_name"));
 
-        if (key.equalsIgnoreCase("set_entity_name_visible"))
+        if (key.equalsIgnoreCase("set_custom_name_visible"))
             builder.setCustomNameVisible((yml.getBoolean(prefixPath + "set_custom_name_visible")));
 
         if (key.equalsIgnoreCase("set_no_ai"))
             builder.setNoAI(yml.getBoolean(prefixPath + "set_no_ai"));
 
-        if (key.equalsIgnoreCase("silent")) {
-            builder.setSilent(yml.getBoolean(prefixPath + "silent"));
+        if (key.equalsIgnoreCase("set_silent")) {
+            builder.setSilent(yml.getBoolean(prefixPath + "set_silent"));
         }
 
         if (key.equalsIgnoreCase("set_location")) {
@@ -84,7 +84,7 @@ public class CodeInterpreter {
             for (String effectType : yml.getConfigurationSection(prefixPath + "potion_effects").getKeys(false)) {
                 PotionEffectType potionEffectType = PotionEffectType.getByName(effectType);
 
-                for (String parameter : yml.getConfigurationSection(prefixPath + "potion_effects." + potionEffectType).getKeys(false)) {
+                for (String parameter : yml.getConfigurationSection(prefixPath + "potion_effects." + effectType).getKeys(false)) {
 
                     int duration = 9999, amplifier = 1;
                     boolean ambient = false, particles = true;

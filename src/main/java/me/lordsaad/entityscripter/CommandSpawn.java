@@ -21,7 +21,10 @@ public class CommandSpawn implements CommandExecutor {
                     if (args.length >= 1) {
                         File f = new File(EntityScripter.plugin.getDataFolder() + "/mobs/" + args[0] + ".txt");
                         CodeInterpreter code = new CodeInterpreter(f);
-                        code.interpretCode(((Player) sender).getLocation());
+                        EntityBuilder builder = code.interpretCode();
+                        builder.setLocation(((Player) sender).getLocation());
+                        builder.spawn();
+
                     } else {
                         sender.sendMessage(ChatColor.RED + "Too few arguments. /spawnmob <mob file>");
                     }
