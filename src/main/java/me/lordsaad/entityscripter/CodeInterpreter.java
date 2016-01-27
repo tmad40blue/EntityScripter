@@ -2,16 +2,17 @@ package me.lordsaad.entityscripter;
 
 import com.darkblade12.particleeffect.ParticleEffect;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Created by Saad on 1/23/2016.
@@ -31,9 +32,19 @@ public class CodeInterpreter {
         if (yml.contains("properties")) {
             for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
                 matcher("properties.", property, builder);
+
             }
         }
         return builder;
+    }
+
+    public void interpretAfterSpawn(Entity entity) {
+        if (yml.contains("properties")) {
+            for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
+                secondaryMatcher(property, "properties." + property, entity);
+
+            }
+        }
     }
 
     public void interpretTicks(EntityBuilder builder) {
@@ -42,7 +53,7 @@ public class CodeInterpreter {
                 for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
                     matcher("tick.", property, builder);
                     builder.inject(builder.getEntity());
-                    secondaryMatcher("tick.", property, builder.getEntity());
+                    tertiaryMatcher("tick.", property, builder.getEntity());
                 }
             }
         }
@@ -124,7 +135,7 @@ public class CodeInterpreter {
         }
     }
 
-    private void secondaryMatcher(String prefixPath, String key, Entity entity) {
+    private void tertiaryMatcher(String prefixPath, String key, Entity entity) {
         if (key.equalsIgnoreCase("particles")) {
             for (String particles : yml.getConfigurationSection(prefixPath + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
@@ -146,6 +157,77 @@ public class CodeInterpreter {
                         , entity.getLocation().getY() + y
                         , entity.getLocation().getZ() + z);
                 particleEffect.display(xd, yd, zd, speed, count, location, 100);
+            }
+        }
+    }
+
+    public void secondaryMatcher(String property, String path, Entity entity) {
+        if (entity.getType() == EntityType.ZOMBIE) {
+            Zombie zombie = (Zombie) entity;
+            if (property.equalsIgnoreCase("set_villager")) zombie.setBaby(yml.getBoolean(path));
+        }
+
+        if (entity instanceof Ageable) {
+            Ageable ageable = (Ageable) entity;
+            if (property.equalsIgnoreCase("set_age")) ageable.setAge(yml.getInt(path));
+            if (property.equalsIgnoreCase("set_age_lock")) ageable.setAgeLock(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_breed")) ageable.setBreed(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_baby")) if (yml.getBoolean(path)) ageable.setBaby();
+            else ageable.setAdult();
+        }
+
+        if (entity instanceof LivingEntity) {
+            LivingEntity livingEntity = (LivingEntity) entity;
+            if (property.equalsIgnoreCase("set_health")) livingEntity.setHealth(yml.getDouble(path));
+            if (property.equalsIgnoreCase("set_despawnable")) livingEntity.setRemoveWhenFarAway(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_passenger_of")) {
+                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path));
+                if (f.exists()) {
+                    CodeInterpreter interpreter = new CodeInterpreter(f);
+                    EntityBuilder builder2 = interpreter.interpretProperties();
+                    builder2.spawn();
+                    livingEntity.setPassenger(builder2.getEntity());
+                }
+            }
+            if (property.equalsIgnoreCase("set_equipment")) {
+                Random random = new Random();
+                for (String stuff : yml.getConfigurationSection(path).getKeys(false)) {
+                    ItemStack item = new ItemStack(Material.LEATHER_BOOTS);
+                    ItemMeta meta = item.getItemMeta();
+                    int r = 100;
+                    for (String properties : yml.getConfigurationSection(path + "." + stuff).getKeys(false)) {
+                        if (properties.equalsIgnoreCase("material"))
+                            item.setType(Material.valueOf(yml.getString(path + "." + stuff + "." + properties)));
+                        if (properties.equalsIgnoreCase("durability"))
+                            item.setDurability((short) yml.getInt(path + "." + stuff + "." + properties));
+                        if (properties.equalsIgnoreCase("name"))
+                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)));
+                        if (properties.equalsIgnoreCase("lore"))
+                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
+                        if (properties.equalsIgnoreCase("chance_of_dropping"))
+                            if (stuff.equalsIgnoreCase("boots"))
+                                ((LivingEntity) entity).getEquipment().setBootsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("leggings"))
+                                ((LivingEntity) entity).getEquipment().setLeggingsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("chestplate"))
+                                ((LivingEntity) entity).getEquipment().setChestplateDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("helmet"))
+                                ((LivingEntity) entity).getEquipment().setHelmetDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                        if (properties.equalsIgnoreCase("chance_of_appearing"))
+                            r = yml.getInt(path + "." + stuff + "." + properties);
+                    }
+                    if (random.nextInt(100) <= r) {
+                        item.setItemMeta(meta);
+                        if (stuff.equalsIgnoreCase("boots"))
+                            ((LivingEntity) entity).getEquipment().setBoots(item);
+                        else if (stuff.equalsIgnoreCase("leggings"))
+                            ((LivingEntity) entity).getEquipment().setLeggings(item);
+                        else if (stuff.equalsIgnoreCase("chestplate"))
+                            ((LivingEntity) entity).getEquipment().setChestplate(item);
+                        else if (stuff.equalsIgnoreCase("helmet"))
+                            ((LivingEntity) entity).getEquipment().setHelmet(item);
+                    }
+                }
             }
         }
     }
