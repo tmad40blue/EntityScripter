@@ -51,6 +51,7 @@ public class EntityBuilder {
         entity.setCustomNameVisible(getCustomNameVisible());
 
         if (getNoAI()) NBTUtils.addEntityTag(entity, "NoAI", 1);
+        if (isSilent()) NBTUtils.addEntityTag(entity, "Silent", 1);
 
         if (location != null) if (!entity.getLocation().equals(location)) entity.teleport(location);
 

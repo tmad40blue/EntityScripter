@@ -2,10 +2,7 @@ package me.lordsaad.entityscripter;
 
 import com.darkblade12.particleeffect.ParticleEffect;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -41,10 +38,11 @@ public class CodeInterpreter {
     }
 
     public void interpretAfterSpawn(Entity entity) {
-        if (yml.contains("properties")) {
-            for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
-                secondaryMatcher(property, "properties." + property, entity);
-
+        if (entity != null) {
+            if (yml.contains("properties")) {
+                for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
+                    secondaryMatcher(property, "properties." + property, entity);
+                }
             }
         }
     }
@@ -54,8 +52,8 @@ public class CodeInterpreter {
             if (yml.contains("tick")) {
                 for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
                     matcher("tick.", property, builder);
-                    builder.inject(builder.getEntity());
                     tertiaryMatcher("tick.", property, builder.getEntity());
+                    builder.inject(builder.getEntity());
                 }
             }
         }
@@ -68,7 +66,7 @@ public class CodeInterpreter {
             builder.setEntityType(EntityType.valueOf(yml.getString(prefixPath + "set_entity_type").toUpperCase()));
 
         if (key.equalsIgnoreCase("set_custom_name"))
-            builder.setCustomName(yml.getString(prefixPath + "set_custom_name"));
+            builder.setCustomName(ChatColor.translateAlternateColorCodes('&', yml.getString(prefixPath + "set_custom_name")));
 
         if (key.equalsIgnoreCase("set_custom_name_visible"))
             builder.setCustomNameVisible((yml.getBoolean(prefixPath + "set_custom_name_visible")));
@@ -185,12 +183,12 @@ public class CodeInterpreter {
             if (property.equalsIgnoreCase("set_health")) livingEntity.setHealth(yml.getDouble(path));
             if (property.equalsIgnoreCase("set_despawnable")) livingEntity.setRemoveWhenFarAway(yml.getBoolean(path));
             if (property.equalsIgnoreCase("set_passenger_of")) {
-                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path));
+                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path) + ".txt");
                 if (f.exists()) {
                     CodeInterpreter interpreter = new CodeInterpreter(f);
                     EntityBuilder builder2 = interpreter.interpretProperties();
                     builder2.spawn();
-                    livingEntity.setPassenger(builder2.getEntity());
+                    builder2.getEntity().setPassenger(livingEntity);
                 }
             }
             if (property.equalsIgnoreCase("set_equipment")) {
