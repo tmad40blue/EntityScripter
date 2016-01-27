@@ -2,7 +2,10 @@ package me.lordsaad.entityscripter;
 
 import com.darkblade12.particleeffect.ParticleEffect;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +14,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -162,10 +164,12 @@ public class CodeInterpreter {
     }
 
     public void secondaryMatcher(String property, String path, Entity entity) {
-        if (entity.getType() == EntityType.ZOMBIE) {
-            Zombie zombie = (Zombie) entity;
-            if (property.equalsIgnoreCase("set_villager")) zombie.setBaby(yml.getBoolean(path));
+        if (entity == null) {
+            return;
         }
+
+        if (entity.getType() == EntityType.ZOMBIE)
+            if (property.equalsIgnoreCase("set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path));
 
         if (entity instanceof Ageable) {
             Ageable ageable = (Ageable) entity;
@@ -197,13 +201,13 @@ public class CodeInterpreter {
                     int r = 100;
                     for (String properties : yml.getConfigurationSection(path + "." + stuff).getKeys(false)) {
                         if (properties.equalsIgnoreCase("material"))
-                            item.setType(Material.valueOf(yml.getString(path + "." + stuff + "." + properties)));
+                            item.setType(Material.valueOf(yml.getString(path + "." + stuff + "." + properties).toUpperCase()));
                         if (properties.equalsIgnoreCase("durability"))
                             item.setDurability((short) yml.getInt(path + "." + stuff + "." + properties));
-                        if (properties.equalsIgnoreCase("name"))
-                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)));
-                        if (properties.equalsIgnoreCase("lore"))
-                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
+                        //if (properties.equalsIgnoreCase("name"))
+                        //  meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)));
+                        //if (properties.equalsIgnoreCase("lore"))
+                        //  meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
                         if (properties.equalsIgnoreCase("chance_of_dropping"))
                             if (stuff.equalsIgnoreCase("boots"))
                                 livingEntity.getEquipment().setBootsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
@@ -219,7 +223,7 @@ public class CodeInterpreter {
                             r = yml.getInt(path + "." + stuff + "." + properties);
                     }
                     if (random.nextInt(100) <= r) {
-                        item.setItemMeta(meta);
+                        //item.setItemMeta(meta);
                         if (stuff.equalsIgnoreCase("boots"))
                             livingEntity.getEquipment().setBoots(item);
                         else if (stuff.equalsIgnoreCase("leggings"))
@@ -232,6 +236,7 @@ public class CodeInterpreter {
                             livingEntity.getEquipment().setItemInHand(item);
                     }
                 }
+
             }
         }
     }

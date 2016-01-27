@@ -18,6 +18,7 @@ public class EntityScripter extends JavaPlugin {
         plugin = this;
         saveDefaultConfig();
         getCommand("spawnmob").setExecutor(new CommandSpawn());
+        getServer().getPluginManager().registerEvents(new MobEvents(), this);
         new TickRunnable().runTaskTimer(this, 1, 1);
     }
 
