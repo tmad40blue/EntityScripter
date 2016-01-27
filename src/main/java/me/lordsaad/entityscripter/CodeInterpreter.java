@@ -206,26 +206,26 @@ public class CodeInterpreter {
                             meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
                         if (properties.equalsIgnoreCase("chance_of_dropping"))
                             if (stuff.equalsIgnoreCase("boots"))
-                                ((LivingEntity) entity).getEquipment().setBootsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                             else if (stuff.equalsIgnoreCase("leggings"))
-                                ((LivingEntity) entity).getEquipment().setLeggingsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                             else if (stuff.equalsIgnoreCase("chestplate"))
-                                ((LivingEntity) entity).getEquipment().setChestplateDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                             else if (stuff.equalsIgnoreCase("helmet"))
-                                ((LivingEntity) entity).getEquipment().setHelmetDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                         if (properties.equalsIgnoreCase("chance_of_appearing"))
                             r = yml.getInt(path + "." + stuff + "." + properties);
                     }
                     if (random.nextInt(100) <= r) {
                         item.setItemMeta(meta);
                         if (stuff.equalsIgnoreCase("boots"))
-                            ((LivingEntity) entity).getEquipment().setBoots(item);
+                            livingEntity.getEquipment().setBoots(item);
                         else if (stuff.equalsIgnoreCase("leggings"))
-                            ((LivingEntity) entity).getEquipment().setLeggings(item);
+                            livingEntity.getEquipment().setLeggings(item);
                         else if (stuff.equalsIgnoreCase("chestplate"))
-                            ((LivingEntity) entity).getEquipment().setChestplate(item);
+                            livingEntity.getEquipment().setChestplate(item);
                         else if (stuff.equalsIgnoreCase("helmet"))
-                            ((LivingEntity) entity).getEquipment().setHelmet(item);
+                            livingEntity.getEquipment().setHelmet(item);
                     }
                 }
             }
