@@ -1,10 +1,9 @@
 package me.lordsaad.entityscripter;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -12,7 +11,7 @@ import java.util.UUID;
  */
 public class EntityScripter extends JavaPlugin {
 
-    public static BiMap<UUID, File> mobs = HashBiMap.create();
+    public static HashMap<UUID, File> mobs = new HashMap<>();
     public static EntityScripter plugin;
 
     public void onEnable() {

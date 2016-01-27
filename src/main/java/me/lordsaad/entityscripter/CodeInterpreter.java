@@ -36,12 +36,14 @@ public class CodeInterpreter {
         return builder;
     }
 
-    public void interpretTicks(EntityBuilder builder, Entity entity) {
-        if (yml.contains("tick")) {
-            for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
-                matcher("tick.", property, builder);
-                builder.inject(entity);
-                secondaryMatcher("tick.", property, entity);
+    public void interpretTicks(EntityBuilder builder) {
+        if (builder.getEntity() != null) {
+            if (yml.contains("tick")) {
+                for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
+                    matcher("tick.", property, builder);
+                    builder.inject(builder.getEntity());
+                    secondaryMatcher("tick.", property, builder.getEntity());
+                }
             }
         }
     }

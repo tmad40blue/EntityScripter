@@ -52,7 +52,7 @@ public class EntityBuilder {
 
         if (getNoAI()) NBTUtils.addEntityTag(entity, "NoAI", 1);
 
-        if (!entity.getLocation().equals(location)) entity.teleport(location);
+        if (location != null) if (!entity.getLocation().equals(location)) entity.teleport(location);
 
         if (entity instanceof LivingEntity) {
             LivingEntity livingEntity = (LivingEntity) entity;
