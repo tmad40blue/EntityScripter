@@ -15,6 +15,7 @@ public class TickRunnable extends BukkitRunnable {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
                 EntityBuilder builder = new EntityBuilder(entity);
                 interpreter.interpretTicks(builder);
+                interpreter.interpretAfterSpawn(builder.getEntity());
             });
         }
     }

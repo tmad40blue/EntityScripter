@@ -192,7 +192,7 @@ public class CodeInterpreter {
             if (property.equalsIgnoreCase("set_equipment")) {
                 Random random = new Random();
                 for (String stuff : yml.getConfigurationSection(path).getKeys(false)) {
-                    ItemStack item = new ItemStack(Material.LEATHER_BOOTS);
+                    ItemStack item = new ItemStack(Material.AIR);
                     ItemMeta meta = item.getItemMeta();
                     int r = 100;
                     for (String properties : yml.getConfigurationSection(path + "." + stuff).getKeys(false)) {
@@ -213,6 +213,8 @@ public class CodeInterpreter {
                                 livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                             else if (stuff.equalsIgnoreCase("helmet"))
                                 livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("hand"))
+                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
                         if (properties.equalsIgnoreCase("chance_of_appearing"))
                             r = yml.getInt(path + "." + stuff + "." + properties);
                     }
@@ -226,6 +228,8 @@ public class CodeInterpreter {
                             livingEntity.getEquipment().setChestplate(item);
                         else if (stuff.equalsIgnoreCase("helmet"))
                             livingEntity.getEquipment().setHelmet(item);
+                        else if (stuff.equalsIgnoreCase("hand"))
+                            livingEntity.getEquipment().setItemInHand(item);
                     }
                 }
             }
