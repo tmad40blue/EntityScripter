@@ -12,6 +12,7 @@ import java.util.UUID;
 public class EntityScripter extends JavaPlugin {
 
     public static HashMap<UUID, File> mobs = new HashMap<>();
+    public static HashMap<UUID, UUID> lastDamage = new HashMap<>();
     public static EntityScripter plugin;
 
     public void onEnable() {

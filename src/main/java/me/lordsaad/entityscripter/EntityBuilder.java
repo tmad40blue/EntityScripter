@@ -46,27 +46,16 @@ public class EntityBuilder {
     }
 
     public void inject(Entity entity) {
-        if (getCustomName() != null) entity.setCustomName(getCustomName());
-
         entity.setCustomNameVisible(getCustomNameVisible());
 
+        if (getCustomName() != null) entity.setCustomName(getCustomName());
         if (getNoAI()) NBTUtils.addEntityTag(entity, "NoAI", 1);
         if (isSilent()) NBTUtils.addEntityTag(entity, "Silent", 1);
-
         if (location != null) if (!entity.getLocation().equals(location)) entity.teleport(location);
+        if (entity instanceof LivingEntity) getPotionEffects().forEach(((LivingEntity) entity)::addPotionEffect);
 
-        if (entity instanceof LivingEntity) {
-            LivingEntity livingEntity = (LivingEntity) entity;
-            getPotionEffects().forEach(livingEntity::addPotionEffect);
-        }
-
-        for (String nbt : customIntNBT.keySet()) {
-            NBTUtils.addEntityTag(entity, nbt, customIntNBT.get(nbt));
-        }
-
-        for (String nbt : customStringNBT.keySet()) {
-            NBTUtils.addEntityTag(entity, nbt, customStringNBT.get(nbt));
-        }
+        for (String nbt : customIntNBT.keySet()) NBTUtils.addEntityTag(entity, nbt, customIntNBT.get(nbt));
+        for (String nbt : customStringNBT.keySet()) NBTUtils.addEntityTag(entity, nbt, customStringNBT.get(nbt));
     }
 
     public EntityType getEntityType() {

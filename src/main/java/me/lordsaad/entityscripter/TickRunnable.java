@@ -14,8 +14,7 @@ public class TickRunnable extends BukkitRunnable {
             world.getEntities().stream().filter(entity -> EntityScripter.mobs.containsKey(entity.getUniqueId())).forEach(entity -> {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
                 EntityBuilder builder = new EntityBuilder(entity);
-                interpreter.interpretTicks(builder);
-                interpreter.interpretAfterSpawn(builder.getEntity());
+                interpreter.interpretOptions("tick", builder);
             });
         }
     }

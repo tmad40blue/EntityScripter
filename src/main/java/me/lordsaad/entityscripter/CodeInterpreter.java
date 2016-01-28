@@ -28,39 +28,38 @@ public class CodeInterpreter {
 
     public EntityBuilder interpretProperties() {
         EntityBuilder builder = new EntityBuilder();
-        if (yml.contains("properties")) {
-            for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
-                matcher("properties.", property, builder);
+        if (!yml.contains("properties")) return null;
 
-            }
-        }
+        for (String property : yml.getConfigurationSection("properties").getKeys(false))
+            matcher("properties.", property, builder);
+
         return builder;
     }
 
-    public void interpretAfterSpawn(Entity entity) {
-        if (entity != null) {
-            if (yml.contains("properties")) {
-                for (String property : yml.getConfigurationSection("properties").getKeys(false)) {
-                    secondaryMatcher(property, "properties." + property, entity);
-                }
-            }
-        }
+    public void applyAfterSpawn(Entity entity) {
+        if (entity == null) return;
+        if (!yml.contains("properties")) return;
+
+        for (String property : yml.getConfigurationSection("properties").getKeys(false))
+            secondaryMatcher(property, "properties." + property, entity);
     }
 
-    public void interpretTicks(EntityBuilder builder) {
-        if (builder.getEntity() != null) {
-            if (yml.contains("tick")) {
-                for (String property : yml.getConfigurationSection("tick").getKeys(false)) {
-                    matcher("tick.", property, builder);
-                    tertiaryMatcher("tick.", property, builder.getEntity());
-                    builder.inject(builder.getEntity());
-                }
-            }
+    public void interpretOptions(String path, EntityBuilder builder) {
+        path = path + ".";
+        if (builder.getEntity() == null) return;
+        if (!yml.contains(path)) return;
+
+        for (String property : yml.getConfigurationSection(path).getKeys(false)) {
+            matcher(path, property, builder);
+            secondaryMatcher(property, path + property, builder.getEntity());
+            tertiaryMatcher(path, property, builder.getEntity());
+            builder.inject(builder.getEntity());
         }
     }
 
     private void matcher(String prefixPath, String key, EntityBuilder builder) {
-        builder.setFile(file);
+        if (file != builder.getFile())
+            builder.setFile(file);
 
         if (key.equalsIgnoreCase("set_entity_type"))
             builder.setEntityType(EntityType.valueOf(yml.getString(prefixPath + "set_entity_type").toUpperCase()));
@@ -74,11 +73,10 @@ public class CodeInterpreter {
         if (key.equalsIgnoreCase("set_no_ai"))
             builder.setNoAI(yml.getBoolean(prefixPath + "set_no_ai"));
 
-        if (key.equalsIgnoreCase("set_silent")) {
+        if (key.equalsIgnoreCase("set_silent"))
             builder.setSilent(yml.getBoolean(prefixPath + "set_silent"));
-        }
 
-        if (key.equalsIgnoreCase("set_location")) {
+        if (key.equalsIgnoreCase("set_location"))
             for (String parameter : yml.getConfigurationSection(prefixPath + "set_location").getKeys(false)) {
 
                 double x = 0, y = 0, z = 0;
@@ -96,9 +94,8 @@ public class CodeInterpreter {
 
                 if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
             }
-        }
 
-        if (key.equalsIgnoreCase("potion_effects")) {
+        if (key.equalsIgnoreCase("potion_effects"))
             for (String effectType : yml.getConfigurationSection(prefixPath + "potion_effects").getKeys(false)) {
                 PotionEffectType potionEffectType = PotionEffectType.getByName(effectType);
 
@@ -108,35 +105,41 @@ public class CodeInterpreter {
                     boolean ambient = false, particles = true;
 
                     if (parameter.equalsIgnoreCase("duration"))
-                        duration = yml.getInt(prefixPath + "potion_effects." + potionEffectType + ".duration");
-
+                        duration = yml.getInt(prefixPath + "potion_effects." + effectType + ".duration");
                     if (parameter.equalsIgnoreCase("amplifier"))
-                        amplifier = yml.getInt(prefixPath + "potion_effects." + potionEffectType + ".amplifier");
-
+                        amplifier = yml.getInt(prefixPath + "potion_effects." + effectType + ".amplifier");
                     if (parameter.equalsIgnoreCase("ambient"))
-                        ambient = yml.getBoolean(prefixPath + "potion_effects." + potionEffectType + ".ambient");
-
+                        ambient = yml.getBoolean(prefixPath + "potion_effects." + effectType + ".ambient");
                     if (parameter.equalsIgnoreCase("particles"))
-                        particles = yml.getBoolean(prefixPath + "potion_effects." + potionEffectType + ".particles");
+                        particles = yml.getBoolean(prefixPath + "potion_effects." + effectType + ".particles");
 
                     builder.addPotionEffect(new PotionEffect(potionEffectType, duration, amplifier, ambient, particles));
                 }
             }
-        }
 
-        if (key.equalsIgnoreCase("custom_nbt")) {
-            for (String nbt : yml.getConfigurationSection(prefixPath + "custom_nbt").getKeys(false)) {
-                if (StringUtils.isNumeric(yml.getString(prefixPath + "custom_nbt" + nbt))) {
+        if (key.equalsIgnoreCase("custom_nbt"))
+            for (String nbt : yml.getConfigurationSection(prefixPath + "custom_nbt").getKeys(false))
+                if (StringUtils.isNumeric(yml.getString(prefixPath + "custom_nbt" + nbt)))
                     builder.addCustomNBT(nbt, Integer.parseInt(yml.getString(prefixPath + "custom_nbt" + nbt)));
-                } else {
-                    builder.addCustomNBT(nbt, yml.getString(prefixPath + "custom_nbt" + nbt));
-                }
+                else builder.addCustomNBT(nbt, yml.getString(prefixPath + "custom_nbt" + nbt));
+
+
+        if (key.equalsIgnoreCase("print"))
+            for (String ink : yml.getConfigurationSection(prefixPath + "print").getKeys(false)) {
+                String to = "@a";
+                String msg = "";
+                if (ink.equalsIgnoreCase("to")) to = yml.getString(prefixPath + "print.to");
+                if (ink.equalsIgnoreCase("msg")) msg = yml.getString(prefixPath + "print.msg");
+                if (to.equalsIgnoreCase("@a"))
+                    Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', msg));
+                else if (to.equalsIgnoreCase("@damager")) if (builder.getEntity() != null) builder.getEntity();
             }
-        }
     }
 
     private void tertiaryMatcher(String prefixPath, String key, Entity entity) {
-        if (key.equalsIgnoreCase("particles")) {
+        if (entity == null) return;
+
+        if (key.equalsIgnoreCase("particles"))
             for (String particles : yml.getConfigurationSection(prefixPath + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
 
@@ -158,13 +161,10 @@ public class CodeInterpreter {
                         , entity.getLocation().getZ() + z);
                 particleEffect.display(xd, yd, zd, speed, count, location, 100);
             }
-        }
     }
 
     public void secondaryMatcher(String property, String path, Entity entity) {
-        if (entity == null) {
-            return;
-        }
+        if (entity == null) return;
 
         if (entity.getType() == EntityType.ZOMBIE)
             if (property.equalsIgnoreCase("set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path));
