@@ -1,5 +1,6 @@
 package me.lordsaad.entityscripter;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -30,6 +31,7 @@ public class MobEvents implements Listener {
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        EntityScripter.lastDamage.put(event.getEntity().getUniqueId(), event.getDamager().getUniqueId());
+        if (event.getDamager() instanceof Player)
+            EntityScripter.lastDamage.put(event.getEntity().getUniqueId(), event.getDamager().getUniqueId());
     }
 }

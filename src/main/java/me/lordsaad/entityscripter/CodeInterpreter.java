@@ -11,7 +11,9 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
+import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * Created by Saad on 1/23/2016.
@@ -124,15 +126,17 @@ public class CodeInterpreter {
                 else builder.addCustomNBT(nbt, yml.getString(prefixPath + "custom_nbt" + nbt));
 
 
-        if (key.equalsIgnoreCase("print"))
+        if (key.equalsIgnoreCase("send_message"))
             for (String ink : yml.getConfigurationSection(prefixPath + "print").getKeys(false)) {
                 String to = "@a";
                 String msg = "";
-                if (ink.equalsIgnoreCase("to")) to = yml.getString(prefixPath + "print.to");
-                if (ink.equalsIgnoreCase("msg")) msg = yml.getString(prefixPath + "print.msg");
-                if (to.equalsIgnoreCase("@a"))
-                    Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', msg));
-                else if (to.equalsIgnoreCase("@damager")) if (builder.getEntity() != null) builder.getEntity();
+                if (ink.equalsIgnoreCase("to")) to = yml.getString(prefixPath + "send_message.to");
+                if (ink.equalsIgnoreCase("msg")) msg = yml.getString(prefixPath + "send_message.msg");
+                List<UUID> entities = Utils.targetEnigmaResolver(to, msg, builder.getEntity());
+                for (World world : Bukkit.getWorlds())
+                    for (Entity entity : world.getEntities())
+                        if (entities.contains(entity.getUniqueId()))
+                            entity.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
             }
     }
 
