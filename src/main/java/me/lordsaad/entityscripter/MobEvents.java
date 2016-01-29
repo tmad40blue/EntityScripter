@@ -14,6 +14,12 @@ public class MobEvents implements Listener {
 
     @EventHandler
     public void mobDeath(EntityDeathEvent event) {
+        if (EntityScripter.mobs.containsKey(event.getEntity().getUniqueId())) {
+            CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(event.getEntity().getUniqueId()));
+            EntityBuilder builder = new EntityBuilder(event.getEntity());
+            interpreter.interpretOptions("on_death", builder);
+        }
+
         if (EntityScripter.lastDamage.containsKey(event.getEntity().getUniqueId()))
             EntityScripter.lastDamage.remove(event.getEntity().getUniqueId());
         if (EntityScripter.mobs.containsKey(event.getEntity().getUniqueId()))

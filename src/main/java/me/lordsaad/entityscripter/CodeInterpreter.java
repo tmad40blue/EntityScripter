@@ -10,10 +10,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.File;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Saad on 1/23/2016.
@@ -36,14 +39,6 @@ public class CodeInterpreter {
             matcher("properties.", property, builder);
 
         return builder;
-    }
-
-    public void applyAfterSpawn(Entity entity) {
-        if (entity == null) return;
-        if (!yml.contains("properties")) return;
-
-        for (String property : yml.getConfigurationSection("properties").getKeys(false))
-            secondaryMatcher(property, "properties." + property, entity);
     }
 
     public void interpretOptions(String path, EntityBuilder builder) {
@@ -127,16 +122,17 @@ public class CodeInterpreter {
 
 
         if (key.equalsIgnoreCase("send_message"))
-            for (String ink : yml.getConfigurationSection(prefixPath + "print").getKeys(false)) {
+            for (String ink : yml.getConfigurationSection(prefixPath + "send_message").getKeys(false)) {
                 String to = "@a";
-                String msg = "";
+                String msg = null;
                 if (ink.equalsIgnoreCase("to")) to = yml.getString(prefixPath + "send_message.to");
                 if (ink.equalsIgnoreCase("msg")) msg = yml.getString(prefixPath + "send_message.msg");
-                List<UUID> entities = Utils.targetEnigmaResolver(to, msg, builder.getEntity());
+                List<UUID> entities = Utils.targetUUIDResolver(to, builder.getEntity());
                 for (World world : Bukkit.getWorlds())
                     for (Entity entity : world.getEntities())
                         if (entities.contains(entity.getUniqueId()))
-                            entity.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
+                            if (msg != null)
+                                entity.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
             }
     }
 
@@ -164,6 +160,25 @@ public class CodeInterpreter {
                         , entity.getLocation().getY() + y
                         , entity.getLocation().getZ() + z);
                 particleEffect.display(xd, yd, zd, speed, count, location, 100);
+            }
+
+        if (key.equalsIgnoreCase("run_command"))
+            for (String ink : yml.getConfigurationSection(prefixPath + "run_command").getKeys(false)) {
+                List<UUID> senders = new ArrayList<>();
+                String cmd = null;
+
+                if (ink.contains("sender"))
+                    if (yml.getString(prefixPath + "run_command.sender").split("=").length > 0)
+                        senders = Utils.targetUUIDResolver(yml.getString(prefixPath + "run_command.sender").split("=")[1], entity);
+
+                if (ink.equalsIgnoreCase("cmd")) cmd = yml.getString(prefixPath + "run_command.cmd");
+
+                if (!senders.isEmpty())
+                    for (Player players : Bukkit.getOnlinePlayers()) {
+                        if (senders.contains(players.getUniqueId()))
+                            Bukkit.dispatchCommand(players, cmd);
+                    }
+                else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
             }
     }
 
@@ -202,14 +217,16 @@ public class CodeInterpreter {
                     ItemMeta meta = item.getItemMeta();
                     int r = 100;
                     for (String properties : yml.getConfigurationSection(path + "." + stuff).getKeys(false)) {
-                        if (properties.equalsIgnoreCase("material"))
+                        if (properties.equalsIgnoreCase("material")) {
+                            Bukkit.broadcastMessage(yml.getString(path + "." + stuff + "." + properties));
                             item.setType(Material.valueOf(yml.getString(path + "." + stuff + "." + properties).toUpperCase()));
+                        }
                         if (properties.equalsIgnoreCase("durability"))
                             item.setDurability((short) yml.getInt(path + "." + stuff + "." + properties));
-                        //if (properties.equalsIgnoreCase("name"))
-                        //  meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)));
-                        //if (properties.equalsIgnoreCase("lore"))
-                        //  meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
+                        if (properties.equalsIgnoreCase("name"))
+                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)));
+                        if (properties.equalsIgnoreCase("lore"))
+                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "." + stuff + "." + properties)).split("\n")));
                         if (properties.equalsIgnoreCase("chance_of_dropping"))
                             if (stuff.equalsIgnoreCase("boots"))
                                 livingEntity.getEquipment().setBootsDropChance(yml.getInt(path + "." + stuff + "." + properties) / 100);
@@ -224,8 +241,9 @@ public class CodeInterpreter {
                         if (properties.equalsIgnoreCase("chance_of_appearing"))
                             r = yml.getInt(path + "." + stuff + "." + properties);
                     }
+
                     if (random.nextInt(100) <= r) {
-                        //item.setItemMeta(meta);
+                        item.setItemMeta(meta);
                         if (stuff.equalsIgnoreCase("boots"))
                             livingEntity.getEquipment().setBoots(item);
                         else if (stuff.equalsIgnoreCase("leggings"))
@@ -238,8 +256,72 @@ public class CodeInterpreter {
                             livingEntity.getEquipment().setItemInHand(item);
                     }
                 }
-
             }
         }
+    }
+
+    public Object injectMatches(Object obj) {
+        if (obj instanceof String) {
+            String string = (String) obj;
+            if (string.startsWith("randomize")) {
+                Random r = new Random();
+                List<Integer> ranges = new ArrayList<>();
+                List<String> matches = new ArrayList<>();
+                Pattern pattern = Pattern.compile("[(.*?)]");
+                Matcher matcher = pattern.matcher(string);
+                while (matcher.find()) {
+                    matches.add(matcher.group(1));
+                }
+                if (!matches.isEmpty()) {
+                    String[] ranges1 = matches.get(0).split(",");
+                    for (String range : ranges1) {
+                        if (StringUtils.isNumeric(range)) {
+                            ranges.add(Integer.parseInt(range));
+                        }
+                    }
+                }
+                if (ranges.size() > 2) {
+                    return r.nextInt((ranges.get(0) - ranges.get(1)) + 1) + ranges.get(1);
+                }
+            }
+        }
+        return obj;
+    }
+
+    public Object injectMatches(Object obj, EntityBuilder builder) {
+        if (obj instanceof String) {
+            String string = (String) obj;
+            if (string.startsWith("randomize")) {
+                Random r = new Random();
+                List<Integer> ranges = new ArrayList<>();
+                List<String> matches = new ArrayList<>();
+                Pattern pattern = Pattern.compile("[(.*?)]");
+                Matcher matcher = pattern.matcher(string);
+                while (matcher.find()) {
+                    matches.add(matcher.group(1));
+                }
+                if (!matches.isEmpty()) {
+                    String[] ranges1 = matches.get(0).split(",");
+                    for (String range : ranges1) {
+                        if (StringUtils.isNumeric(range)) {
+                            ranges.add(Integer.parseInt(range));
+                        }
+                    }
+                }
+                if (ranges.size() > 2) {
+                    return r.nextInt((ranges.get(0) - ranges.get(1)) + 1) + ranges.get(1);
+                }
+            } else {
+                try {
+                    for (PropertyDescriptor propertyDescriptor :
+                            Introspector.getBeanInfo(builder.getClass()).getPropertyDescriptors())
+                        if (propertyDescriptor.getName().equals(string))
+                            return propertyDescriptor.getReadMethod();
+                } catch (IntrospectionException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return obj;
     }
 }
