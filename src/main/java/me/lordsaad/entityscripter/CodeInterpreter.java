@@ -10,9 +10,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -263,7 +260,7 @@ public class CodeInterpreter {
     public Object injectMatches(Object obj) {
         if (obj instanceof String) {
             String string = (String) obj;
-            if (string.startsWith("randomize")) {
+            if (string.contains("%randomize%")) {
                 Random r = new Random();
                 List<Integer> ranges = new ArrayList<>();
                 List<String> matches = new ArrayList<>();
@@ -281,46 +278,39 @@ public class CodeInterpreter {
                     }
                 }
                 if (ranges.size() > 2) {
-                    return r.nextInt((ranges.get(0) - ranges.get(1)) + 1) + ranges.get(1);
-                }
-            }
-        }
-        return obj;
+                    return string.replace("%randomize", r.nextInt((ranges.get(0) - ranges.get(1)) + 1) + ranges.get(1) + "");
+                } else return obj;
+            } else return obj;
+        } else return obj;
     }
 
     public Object injectMatches(Object obj, EntityBuilder builder) {
         if (obj instanceof String) {
             String string = (String) obj;
-            if (string.startsWith("randomize")) {
-                Random r = new Random();
-                List<Integer> ranges = new ArrayList<>();
-                List<String> matches = new ArrayList<>();
-                Pattern pattern = Pattern.compile("[(.*?)]");
-                Matcher matcher = pattern.matcher(string);
-                while (matcher.find()) {
-                    matches.add(matcher.group(1));
-                }
-                if (!matches.isEmpty()) {
-                    String[] ranges1 = matches.get(0).split(",");
-                    for (String range : ranges1) {
-                        if (StringUtils.isNumeric(range)) {
-                            ranges.add(Integer.parseInt(range));
-                        }
-                    }
-                }
-                if (ranges.size() > 2) {
-                    return r.nextInt((ranges.get(0) - ranges.get(1)) + 1) + ranges.get(1);
-                }
-            } else {
-                try {
-                    for (PropertyDescriptor propertyDescriptor :
-                            Introspector.getBeanInfo(builder.getClass()).getPropertyDescriptors())
-                        if (propertyDescriptor.getName().equals(string))
-                            return propertyDescriptor.getReadMethod();
-                } catch (IntrospectionException e) {
-                    e.printStackTrace();
-                }
-            }
+
+            if (string.contains("%location%"))
+                return string.replace("%location%", LocationHandler.toString(builder.getLocation()));
+
+            else if (string.contains("%location_x%"))
+                return string.replace("%location_x%", builder.getLocation().getBlockX() + "");
+
+            else if (string.contains("%location_y%"))
+                return string.replace("%location_y%", builder.getLocation().getBlockY() + "");
+
+            else if (string.contains("%location_z%"))
+                return string.replace("%location_z%", builder.getLocation().getBlockZ() + "");
+
+            else if (string.contains("%location_world%"))
+                return string.replace("%location_world%", builder.getLocation().getWorld().getName() + "");
+
+            else if (string.contains("%entity_type%"))
+                return string.replace("%entity_type%", builder.getEntityType().name());
+
+            else if (string.contains("%name%"))
+                return string.replace("%name%", builder.getCustomName());
+
+            else if (string.contains("%entity_type%"))
+                return string.replace("%entity_type%", builder.getEntityType().name());
         }
         return obj;
     }
