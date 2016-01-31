@@ -88,4 +88,12 @@ public class Utils {
 
         return entities;
     }
+
+    public static String listToString(List<String> list) {
+        String finalString = "";
+        if (list.size() > 1)
+            for (String string : list) finalString = finalString + ", " + string;
+        else finalString = list.get(0);
+        return finalString;
+    }
 }
