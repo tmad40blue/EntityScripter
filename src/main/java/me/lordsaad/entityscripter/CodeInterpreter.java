@@ -36,7 +36,7 @@ public class CodeInterpreter {
         return builder;
     }
 
-    public void interpretOptions(String path, EntityBuilder builder) {
+    public void interpretOption(String path, EntityBuilder builder) {
         path = path + ".";
         if (builder.getEntity() == null) return;
         if (!yml.contains(path)) return;
@@ -105,14 +105,14 @@ public class CodeInterpreter {
                 double x = 0, y = 0, z = 0;
                 int count = 10;
                 float xd = 0, yd = 0, zd = 0, speed = 0;
-                if (yml.contains(path1 + "x")) x = yml.getDouble(path1 + "x");
-                if (yml.contains(path1 + "y")) y = yml.getDouble(path1 + "y");
-                if (yml.contains(path1 + "z")) z = yml.getDouble(path1 + "z");
-                if (yml.contains(path1 + "xd")) xd = (float) yml.getDouble(path1 + "xd");
-                if (yml.contains(path1 + "yd")) yd = (float) yml.getDouble(path1 + "yd");
-                if (yml.contains(path1 + "zd")) zd = (float) yml.getDouble(path1 + "zd");
-                if (yml.contains(path1 + "speed")) speed = (float) yml.getDouble(path1 + "speed");
-                if (yml.contains(path1 + "count")) count = yml.getInt(path1 + "count");
+                if (yml.contains(path1 + "x")) x = (double) injectMatches(yml.get(path1 + "x"), builder);
+                if (yml.contains(path1 + "y")) y = (double) injectMatches(yml.get(path1 + "y"), builder);
+                if (yml.contains(path1 + "z")) z = (double) injectMatches(yml.get(path1 + "z"), builder);
+                if (yml.contains(path1 + "xd")) xd = (float) injectMatches(yml.get(path1 + "xd"), builder);
+                if (yml.contains(path1 + "yd")) yd = (float) injectMatches(yml.get(path1 + "yd"), builder);
+                if (yml.contains(path1 + "zd")) zd = (float) injectMatches(yml.get(path1 + "zd"), builder);
+                if (yml.contains(path1 + "speed")) speed = (float) injectMatches(yml.get(path1 + "speed"), builder);
+                if (yml.contains(path1 + "count")) count = (int) injectMatches(yml.get(path1 + "count"), builder);
                 Location location = new Location(builder.getEntity().getLocation().getWorld()
                         , builder.getEntity().getLocation().getX() + x
                         , builder.getEntity().getLocation().getY() + y
@@ -130,13 +130,13 @@ public class CodeInterpreter {
                     boolean ambient = false, particles = true;
 
                     if (parameter.equalsIgnoreCase("duration"))
-                        duration = yml.getInt(path + "potion_effects." + effectType + ".duration");
+                        duration = (int) injectMatches(yml.get(path + "potion_effects." + effectType + ".duration"), builder);
                     if (parameter.equalsIgnoreCase("amplifier"))
-                        amplifier = yml.getInt(path + "potion_effects." + effectType + ".amplifier");
+                        amplifier = (int) injectMatches(yml.get(path + "potion_effects." + effectType + ".amplifier"), builder);
                     if (parameter.equalsIgnoreCase("ambient"))
-                        ambient = yml.getBoolean(path + "potion_effects." + effectType + ".ambient");
+                        ambient = (boolean) injectMatches(yml.get(path + "potion_effects." + effectType + ".ambient"), builder);
                     if (parameter.equalsIgnoreCase("particles"))
-                        particles = yml.getBoolean(path + "potion_effects." + effectType + ".particles");
+                        particles = (boolean) injectMatches(yml.get(path + "potion_effects." + effectType + ".particles"), builder);
 
                     builder.addPotionEffect(new PotionEffect(potionEffectType, duration, amplifier, ambient, particles));
                 }
@@ -156,9 +156,9 @@ public class CodeInterpreter {
                 if (!senders.isEmpty())
                     for (Player players : Bukkit.getOnlinePlayers()) {
                         if (senders.contains(players.getUniqueId()))
-                            Bukkit.dispatchCommand(players, cmd);
+                            Bukkit.dispatchCommand(players, String.valueOf(injectMatches(cmd, builder)));
                     }
-                else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+                else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.valueOf(injectMatches(cmd, builder)));
             }
 
         if (key.equalsIgnoreCase("send_message"))
@@ -314,7 +314,7 @@ public class CodeInterpreter {
                 else if (string.contains("%entity_type%"))
                     return string.replace("%entity_type%", builder.getEntityType().name());
 
-                else return Utils.listToString(Utils.targetStringResolver(string, builder.getEntity()));
+                else return String.join(", ", Utils.targetStringResolver(string, builder.getEntity()));
             }
         }
         return obj;

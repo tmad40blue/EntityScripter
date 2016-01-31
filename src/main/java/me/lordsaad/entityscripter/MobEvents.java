@@ -17,7 +17,7 @@ public class MobEvents implements Listener {
         if (EntityScripter.mobs.containsKey(event.getEntity().getUniqueId())) {
             CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(event.getEntity().getUniqueId()));
             EntityBuilder builder = new EntityBuilder(event.getEntity());
-            interpreter.interpretOptions("on_death", builder);
+            interpreter.interpretOption("on_death", builder);
         }
 
         if (EntityScripter.lastDamage.containsKey(event.getEntity().getUniqueId()))
@@ -31,7 +31,7 @@ public class MobEvents implements Listener {
         if (EntityScripter.mobs.containsKey(event.getEntity().getUniqueId())) {
             CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(event.getEntity().getUniqueId()));
             EntityBuilder builder = new EntityBuilder(event.getEntity());
-            interpreter.interpretOptions("receive_damage", builder);
+            interpreter.interpretOption("receive_damage", builder);
         }
     }
 
