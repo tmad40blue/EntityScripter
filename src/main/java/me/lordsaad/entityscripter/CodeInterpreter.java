@@ -94,6 +94,84 @@ public class CodeInterpreter {
                 else builder.addCustomNBT(nbt, yml.getString(path + "custom_nbt" + nbt));
     }
 
+    public void secondaryMatcher(String property, String path, Entity entity) {
+        if (entity == null) return;
+
+        if (entity.getType() == EntityType.ZOMBIE)
+            if (property.equalsIgnoreCase("set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path));
+
+        if (entity instanceof Ageable) {
+            Ageable ageable = (Ageable) entity;
+            if (property.equalsIgnoreCase("set_age")) ageable.setAge(yml.getInt(path));
+            if (property.equalsIgnoreCase("set_age_lock")) ageable.setAgeLock(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_breed")) ageable.setBreed(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_baby")) if (yml.getBoolean(path)) ageable.setBaby();
+            else ageable.setAdult();
+        }
+
+        if (entity instanceof LivingEntity) {
+            LivingEntity livingEntity = (LivingEntity) entity;
+            if (property.equalsIgnoreCase("set_health")) livingEntity.setHealth(yml.getDouble(path));
+            if (property.equalsIgnoreCase("set_despawnable")) livingEntity.setRemoveWhenFarAway(yml.getBoolean(path));
+            if (property.equalsIgnoreCase("set_passenger_of")) {
+                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path) + ".txt");
+                if (f.exists()) {
+                    CodeInterpreter interpreter = new CodeInterpreter(f);
+                    EntityBuilder builder2 = interpreter.interpretProperties();
+                    builder2.spawn();
+                    builder2.getEntity().setPassenger(livingEntity);
+                }
+            }
+            if (property.equalsIgnoreCase("set_equipment")) {
+                Random random = new Random();
+                for (String stuff : yml.getConfigurationSection(path + "set_equipment.").getKeys(false)) {
+                    String path1 = path + "set_equipment.";
+                    ItemStack item = new ItemStack(Material.AIR);
+                    ItemMeta meta = item.getItemMeta();
+                    int r = 100;
+                    for (String properties : yml.getConfigurationSection(path1 + stuff).getKeys(false)) {
+                        if (properties.equalsIgnoreCase("material")) {
+                            item.setType(Material.valueOf(yml.getString(path1 + stuff + "." + properties).toUpperCase()));
+                        }
+                        if (properties.equalsIgnoreCase("durability"))
+                            item.setDurability((short) yml.getInt(path1 + stuff + "." + properties));
+                        if (properties.equalsIgnoreCase("name"))
+                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)));
+                        if (properties.equalsIgnoreCase("lore"))
+                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)).split("\n")));
+                        if (properties.equalsIgnoreCase("chance_of_dropping"))
+                            if (stuff.equalsIgnoreCase("boots"))
+                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("leggings"))
+                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("chestplate"))
+                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("helmet"))
+                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                            else if (stuff.equalsIgnoreCase("hand"))
+                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                        if (properties.equalsIgnoreCase("chance_of_appearing"))
+                            r = yml.getInt(path1 + stuff + "." + properties);
+                    }
+
+                    if (random.nextInt(100) <= r) {
+                        item.setItemMeta(meta);
+                        if (stuff.equalsIgnoreCase("boots"))
+                            livingEntity.getEquipment().setBoots(item);
+                        else if (stuff.equalsIgnoreCase("leggings"))
+                            livingEntity.getEquipment().setLeggings(item);
+                        else if (stuff.equalsIgnoreCase("chestplate"))
+                            livingEntity.getEquipment().setChestplate(item);
+                        else if (stuff.equalsIgnoreCase("helmet"))
+                            livingEntity.getEquipment().setHelmet(item);
+                        else if (stuff.equalsIgnoreCase("hand"))
+                            livingEntity.getEquipment().setItemInHand(item);
+                    }
+                }
+            }
+        }
+    }
+
     private void tertiaryMatcher(String path, String key, EntityBuilder builder) {
         if (builder.getEntity() == null) return;
 
@@ -176,84 +254,6 @@ public class CodeInterpreter {
             }
     }
 
-    public void secondaryMatcher(String property, String path, Entity entity) {
-        if (entity == null) return;
-
-        if (entity.getType() == EntityType.ZOMBIE)
-            if (property.equalsIgnoreCase("set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path));
-
-        if (entity instanceof Ageable) {
-            Ageable ageable = (Ageable) entity;
-            if (property.equalsIgnoreCase("set_age")) ageable.setAge(yml.getInt(path));
-            if (property.equalsIgnoreCase("set_age_lock")) ageable.setAgeLock(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_breed")) ageable.setBreed(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_baby")) if (yml.getBoolean(path)) ageable.setBaby();
-            else ageable.setAdult();
-        }
-
-        if (entity instanceof LivingEntity) {
-            LivingEntity livingEntity = (LivingEntity) entity;
-            if (property.equalsIgnoreCase("set_health")) livingEntity.setHealth(yml.getDouble(path));
-            if (property.equalsIgnoreCase("set_despawnable")) livingEntity.setRemoveWhenFarAway(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_passenger_of")) {
-                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path) + ".txt");
-                if (f.exists()) {
-                    CodeInterpreter interpreter = new CodeInterpreter(f);
-                    EntityBuilder builder2 = interpreter.interpretProperties();
-                    builder2.spawn();
-                    builder2.getEntity().setPassenger(livingEntity);
-                }
-            }
-            if (property.equalsIgnoreCase("set_equipment")) {
-                Random random = new Random();
-                for (String stuff : yml.getConfigurationSection(path + "set_equipment.").getKeys(false)) {
-                    String path1 = path + "set_equipment.";
-                    ItemStack item = new ItemStack(Material.AIR);
-                    ItemMeta meta = item.getItemMeta();
-                    int r = 100;
-                    for (String properties : yml.getConfigurationSection(path1 + stuff).getKeys(false)) {
-                        if (properties.equalsIgnoreCase("material")) {
-                            item.setType(Material.valueOf(yml.getString(path1 + stuff + "." + properties).toUpperCase()));
-                        }
-                        if (properties.equalsIgnoreCase("durability"))
-                            item.setDurability((short) yml.getInt(path1 + stuff + "." + properties));
-                        if (properties.equalsIgnoreCase("name"))
-                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)));
-                        if (properties.equalsIgnoreCase("lore"))
-                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)).split("\n")));
-                        if (properties.equalsIgnoreCase("chance_of_dropping"))
-                            if (stuff.equalsIgnoreCase("boots"))
-                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
-                            else if (stuff.equalsIgnoreCase("leggings"))
-                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
-                            else if (stuff.equalsIgnoreCase("chestplate"))
-                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
-                            else if (stuff.equalsIgnoreCase("helmet"))
-                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
-                            else if (stuff.equalsIgnoreCase("hand"))
-                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
-                        if (properties.equalsIgnoreCase("chance_of_appearing"))
-                            r = yml.getInt(path1 + stuff + "." + properties);
-                    }
-
-                    if (random.nextInt(100) <= r) {
-                        item.setItemMeta(meta);
-                        if (stuff.equalsIgnoreCase("boots"))
-                            livingEntity.getEquipment().setBoots(item);
-                        else if (stuff.equalsIgnoreCase("leggings"))
-                            livingEntity.getEquipment().setLeggings(item);
-                        else if (stuff.equalsIgnoreCase("chestplate"))
-                            livingEntity.getEquipment().setChestplate(item);
-                        else if (stuff.equalsIgnoreCase("helmet"))
-                            livingEntity.getEquipment().setHelmet(item);
-                        else if (stuff.equalsIgnoreCase("hand"))
-                            livingEntity.getEquipment().setItemInHand(item);
-                    }
-                }
-            }
-        }
-    }
-
     public Object injectMatches(Object obj) {
         if (obj instanceof String) {
             String string = (String) obj;
@@ -293,25 +293,25 @@ public class CodeInterpreter {
                 if (string.contains("%location%"))
                     return string.replace("%location%", LocationHandler.toString(builder.getLocation()));
 
-                else if (string.contains("%location_x%"))
+                if (string.contains("%location_x%"))
                     return string.replace("%location_x%", builder.getLocation().getBlockX() + "");
 
-                else if (string.contains("%location_y%"))
+                if (string.contains("%location_y%"))
                     return string.replace("%location_y%", builder.getLocation().getBlockY() + "");
 
-                else if (string.contains("%location_z%"))
+                if (string.contains("%location_z%"))
                     return string.replace("%location_z%", builder.getLocation().getBlockZ() + "");
 
-                else if (string.contains("%location_world%"))
+                if (string.contains("%location_world%"))
                     return string.replace("%location_world%", builder.getLocation().getWorld().getName() + "");
 
-                else if (string.contains("%entity_type%"))
+                if (string.contains("%entity_type%"))
                     return string.replace("%entity_type%", builder.getEntityType().name());
 
-                else if (string.contains("%name%"))
+                if (string.contains("%name%"))
                     return string.replace("%name%", builder.getCustomName());
 
-                else if (string.contains("%entity_type%"))
+                if (string.contains("%entity_type%"))
                     return string.replace("%entity_type%", builder.getEntityType().name());
 
                 else return String.join(", ", Utils.targetStringResolver(string, builder.getEntity()));
