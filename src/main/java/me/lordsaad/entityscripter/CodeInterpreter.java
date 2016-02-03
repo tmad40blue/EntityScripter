@@ -3,6 +3,7 @@ package me.lordsaad.entityscripter;
 import com.darkblade12.particleeffect.ParticleEffect;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -12,6 +13,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Saad on 1/23/2016.
@@ -36,17 +38,21 @@ public class CodeInterpreter {
         return builder;
     }
 
-    public void interpretOption(String path, EntityBuilder builder) {
-        path = path + ".";
+    public void interpretOption(String option, EntityBuilder builder) {
+        option = option + ".";
         if (builder.getEntity() == null) return;
-        if (!yml.contains(path)) return;
+        if (!yml.contains(option)) return;
 
-        for (String property : yml.getConfigurationSection(path).getKeys(false)) {
-            matcher(path, property, builder);
-            secondaryMatcher(property, path + property, builder.getEntity());
-            tertiaryMatcher(path, property, builder);
+        for (String property : yml.getConfigurationSection(option).getKeys(false)) {
+            matcher(option, property, builder);
+            secondaryMatcher(property, option + property, builder.getEntity());
+            tertiaryMatcher(option, property, builder);
             builder.inject(builder.getEntity());
         }
+    }
+
+    public boolean hasOption(String option) {
+        return yml.contains(option);
     }
 
     private void matcher(String path, String key, EntityBuilder builder) {
@@ -68,30 +74,63 @@ public class CodeInterpreter {
         if (key.equalsIgnoreCase("set_silent"))
             builder.setSilent(yml.getBoolean(path + "set_silent"));
 
-        if (key.equalsIgnoreCase("set_location"))
-            for (String parameter : yml.getConfigurationSection(path + "set_location").getKeys(false)) {
-
-                double x = 0, y = 0, z = 0;
-                World world = null;
-                float pitch = 0, yaw = 0;
-
-                if (parameter.equalsIgnoreCase("x")) x = yml.getDouble(path + "set_location.x");
-                if (parameter.equalsIgnoreCase("y")) y = yml.getDouble(path + "set_location.y");
-                if (parameter.equalsIgnoreCase("z")) z = yml.getDouble(path + "set_location.z");
-                if (parameter.equalsIgnoreCase("world"))
-                    world = Bukkit.getWorld(yml.getString(path + "set_location.world"));
-                if (parameter.equalsIgnoreCase("pitch"))
-                    pitch = (float) yml.getDouble(path + "set_location.pitch");
-                if (parameter.equalsIgnoreCase("yaw")) yaw = (float) yml.getDouble(path + "set_location.yaw");
-
-                if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
-            }
-
         if (key.equalsIgnoreCase("custom_nbt"))
             for (String nbt : yml.getConfigurationSection(path + "custom_nbt").getKeys(false))
                 if (StringUtils.isNumeric(yml.getString(path + "custom_nbt" + nbt)))
                     builder.addCustomNBT(nbt, Integer.parseInt(yml.getString(path + "custom_nbt" + nbt)));
                 else builder.addCustomNBT(nbt, yml.getString(path + "custom_nbt" + nbt));
+
+        if (key.equalsIgnoreCase("set_location")) {
+            for (String parameter : yml.getConfigurationSection(path + "set_location").getKeys(false)) {
+                String path1 = path + "set_location." + parameter;
+
+                double x = 0, y = 0, z = 0;
+                World world = null;
+                float pitch = 0, yaw = 0;
+
+                if (parameter.equalsIgnoreCase("x")) x = yml.getDouble(path);
+                if (parameter.equalsIgnoreCase("y")) y = yml.getDouble(path);
+                if (parameter.equalsIgnoreCase("z")) z = yml.getDouble(path);
+                if (parameter.equalsIgnoreCase("world"))
+                    world = Bukkit.getWorld(yml.getString(path));
+                if (parameter.equalsIgnoreCase("pitch"))
+                    pitch = (float) yml.getDouble(path);
+                if (parameter.equalsIgnoreCase("yaw")) yaw = (float) yml.getDouble(path);
+
+                if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
+            }
+
+        } else if (key.equalsIgnoreCase("spawn_naturally"))
+            for (String parameter : yml.getConfigurationSection(path + "spawn_naturally").getKeys(false)) {
+                String path1 = path + "spawn_naturally." + parameter;
+
+                double chance = 10;
+                boolean highestBlock = false;
+                List<Biome> biomes = new ArrayList<>();
+                List<Material> blacklist = new ArrayList<>();
+                List<Material> whitelist = new ArrayList<>();
+                List<String> worlds = new ArrayList<>();
+
+                if (parameter.equalsIgnoreCase("biomes"))
+                    biomes.addAll(yml.getStringList(path1).stream().filter(biome -> Biome.valueOf(biome) != null).map(Biome::valueOf).collect(Collectors.toList()));
+                else if (parameter.equalsIgnoreCase("biome"))
+                    if (Biome.valueOf(yml.getString(path)) != null) biomes.add(Biome.valueOf(yml.getString(path)));
+                if (parameter.equalsIgnoreCase("set_on_highest_block")) highestBlock = yml.getBoolean(path);
+                if (parameter.equalsIgnoreCase("chance")) chance = yml.getDouble(path);
+                if (parameter.equalsIgnoreCase("whitelist_blocks"))
+                    whitelist.addAll(yml.getStringList(path1).stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
+                else if (parameter.equalsIgnoreCase("blacklist_blocks"))
+                    blacklist.addAll(yml.getStringList(path1).stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
+                if (parameter.equalsIgnoreCase("worlds"))
+                    for (String world : yml.getStringList("worlds"))
+                        worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(world)).map(worlds1 -> world).collect(Collectors.toList()));
+                else if (parameter.equalsIgnoreCase("world"))
+                    worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path))).map(worlds1 -> yml.getString(path)).collect(Collectors.toList()));
+
+                if (!worlds.isEmpty()) {
+                    SpawnHandler
+                }
+            }
     }
 
     public void secondaryMatcher(String property, String path, Entity entity) {

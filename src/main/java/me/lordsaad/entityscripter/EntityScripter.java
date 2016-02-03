@@ -20,7 +20,7 @@ public class EntityScripter extends JavaPlugin {
         saveDefaultConfig();
         getCommand("spawnmob").setExecutor(new CommandSpawn());
         getServer().getPluginManager().registerEvents(new MobEvents(), this);
-        new TickRunnable().runTaskTimer(this, 1, 1);
+        new HeartBeat().runTaskTimer(this, 1, 1);
     }
 
     public void onDisable() {
