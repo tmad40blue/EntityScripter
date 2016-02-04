@@ -38,21 +38,29 @@ public class CodeInterpreter {
         return builder;
     }
 
-    public void interpretOption(String option, EntityBuilder builder) {
-        option = option + ".";
+    public void resolveModule(String module, EntityBuilder builder) {
+        module = module + ".";
         if (builder.getEntity() == null) return;
-        if (!yml.contains(option)) return;
+        if (!yml.contains(module)) return;
 
-        for (String property : yml.getConfigurationSection(option).getKeys(false)) {
-            matcher(option, property, builder);
-            secondaryMatcher(property, option + property, builder.getEntity());
-            tertiaryMatcher(option, property, builder);
+        for (String property : yml.getConfigurationSection(module).getKeys(false)) {
+            matcher(module, property, builder);
+            secondaryMatcher(property, module + property, builder.getEntity());
+            tertiaryMatcher(module, property, builder);
             builder.inject(builder.getEntity());
         }
     }
 
     public boolean hasOption(String option) {
         return yml.contains(option);
+    }
+
+    public void resolveLocation(EntityBuilder builder) {
+
+        for (String key : yml.getConfigurationSection("spawn").getKeys(false)) {
+            String path = "spawn." + key + ".";
+
+        }
     }
 
     private void matcher(String path, String key, EntityBuilder builder) {
@@ -82,7 +90,6 @@ public class CodeInterpreter {
 
         if (key.equalsIgnoreCase("set_location")) {
             for (String parameter : yml.getConfigurationSection(path + "set_location").getKeys(false)) {
-                String path1 = path + "set_location." + parameter;
 
                 double x = 0, y = 0, z = 0;
                 World world = null;
@@ -114,9 +121,9 @@ public class CodeInterpreter {
                 if (parameter.equalsIgnoreCase("biomes"))
                     biomes.addAll(yml.getStringList(path1).stream().filter(biome -> Biome.valueOf(biome) != null).map(Biome::valueOf).collect(Collectors.toList()));
                 else if (parameter.equalsIgnoreCase("biome"))
-                    if (Biome.valueOf(yml.getString(path)) != null) biomes.add(Biome.valueOf(yml.getString(path)));
-                if (parameter.equalsIgnoreCase("set_on_highest_block")) highestBlock = yml.getBoolean(path);
-                if (parameter.equalsIgnoreCase("chance")) chance = yml.getDouble(path);
+                    if (Biome.valueOf(yml.getString(path1)) != null) biomes.add(Biome.valueOf(yml.getString(path1)));
+                if (parameter.equalsIgnoreCase("set_on_highest_block")) highestBlock = yml.getBoolean(path1);
+                if (parameter.equalsIgnoreCase("chance")) chance = yml.getDouble(path1);
                 if (parameter.equalsIgnoreCase("whitelist_blocks"))
                     whitelist.addAll(yml.getStringList(path1).stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
                 else if (parameter.equalsIgnoreCase("blacklist_blocks"))
@@ -125,11 +132,11 @@ public class CodeInterpreter {
                     for (String world : yml.getStringList("worlds"))
                         worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(world)).map(worlds1 -> world).collect(Collectors.toList()));
                 else if (parameter.equalsIgnoreCase("world"))
-                    worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path))).map(worlds1 -> yml.getString(path)).collect(Collectors.toList()));
+                    worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path1))).map(worlds1 -> yml.getString(path1)).collect(Collectors.toList()));
 
-                if (!worlds.isEmpty()) {
-                    SpawnHandler
-                }
+                if (!worlds.isEmpty() && Bukkit.getOnlinePlayers().size() > 0)
+                    for (Player p : Bukkit.getOnlinePlayers())
+                        builder.setLocation(new SpawnHandler(worlds, biomes, whitelist, blacklist, chance, highestBlock).makeNewLocation(p.getLocation()));
             }
     }
 
@@ -163,34 +170,34 @@ public class CodeInterpreter {
             }
             if (property.equalsIgnoreCase("set_equipment")) {
                 Random random = new Random();
-                for (String stuff : yml.getConfigurationSection(path + "set_equipment.").getKeys(false)) {
-                    String path1 = path + "set_equipment.";
+                for (String stuff : yml.getConfigurationSection(path + property).getKeys(false)) {
                     ItemStack item = new ItemStack(Material.AIR);
                     ItemMeta meta = item.getItemMeta();
                     int r = 100;
-                    for (String properties : yml.getConfigurationSection(path1 + stuff).getKeys(false)) {
+                    for (String properties : yml.getConfigurationSection(path + property + "." + stuff).getKeys(false)) {
+                        String path1 = path + properties + "." + stuff;
                         if (properties.equalsIgnoreCase("material")) {
-                            item.setType(Material.valueOf(yml.getString(path1 + stuff + "." + properties).toUpperCase()));
+                            item.setType(Material.valueOf(yml.getString(path1).toUpperCase()));
                         }
                         if (properties.equalsIgnoreCase("durability"))
-                            item.setDurability((short) yml.getInt(path1 + stuff + "." + properties));
+                            item.setDurability((short) yml.getInt(path1));
                         if (properties.equalsIgnoreCase("name"))
-                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)));
+                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)));
                         if (properties.equalsIgnoreCase("lore"))
-                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1 + stuff + "." + properties)).split("\n")));
+                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)).split("\n")));
                         if (properties.equalsIgnoreCase("chance_of_dropping"))
                             if (stuff.equalsIgnoreCase("boots"))
-                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path1) / 100);
                             else if (stuff.equalsIgnoreCase("leggings"))
-                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path1) / 100);
                             else if (stuff.equalsIgnoreCase("chestplate"))
-                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path1) / 100);
                             else if (stuff.equalsIgnoreCase("helmet"))
-                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path1) / 100);
                             else if (stuff.equalsIgnoreCase("hand"))
-                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path1 + stuff + "." + properties) / 100);
+                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path1) / 100);
                         if (properties.equalsIgnoreCase("chance_of_appearing"))
-                            r = yml.getInt(path1 + stuff + "." + properties);
+                            r = yml.getInt(path1);
                     }
 
                     if (random.nextInt(100) <= r) {

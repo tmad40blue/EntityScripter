@@ -16,7 +16,7 @@ public class HeartBeat extends BukkitRunnable {
             world.getEntities().stream().filter(entity -> EntityScripter.mobs.containsKey(entity.getUniqueId())).forEach(entity -> {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
                 EntityBuilder builder = new EntityBuilder(entity);
-                interpreter.interpretOption("tick", builder);
+                interpreter.resolveModule("tick", builder);
             });
         }
 
@@ -24,9 +24,9 @@ public class HeartBeat extends BukkitRunnable {
         for (File file : dir.listFiles())
             if (file != null) {
                 CodeInterpreter code = new CodeInterpreter(file);
-                if (code.hasOption("spawn")) {
+                if (code.hasOption("properties")) {
                     EntityBuilder builder = code.interpretProperties();
-                    code.interpretOption("properties", builder);
+                    code.resolveModule("properties", builder);
                     builder.spawn();
                 }
             }

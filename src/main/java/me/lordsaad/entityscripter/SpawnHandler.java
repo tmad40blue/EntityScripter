@@ -35,6 +35,7 @@ public class SpawnHandler extends EntityBuilder {
         Random r = new Random();
         if (r.nextInt() <= chance) {
             List<Block> blocks = new ArrayList<>();
+            List<Block> toRemove = new ArrayList<>();
             int radius = 30;
 
             for (int x = -radius; x <= radius; x++)
@@ -45,14 +46,15 @@ public class SpawnHandler extends EntityBuilder {
             if (worlds.contains(player.getWorld().getName())) {
 
                 for (Block block : blocks) {
-                    if (!whitelist.contains(block.getType())) blocks.remove(block);
-                    if (blacklist.contains(block.getType())) blocks.remove(block);
-                    if (!biomes.contains(block.getBiome())) blocks.remove(block);
-                    if (highestBlock) if (block.getLightFromSky() != 15) blocks.remove(block);
+                    if (!whitelist.contains(block.getType())) toRemove.add(block);
+                    if (blacklist.contains(block.getType())) toRemove.add(block);
+                    if (!biomes.contains(block.getBiome())) toRemove.add(block);
+                    if (highestBlock) if (block.getLightFromSky() != 15) toRemove.add(block);
                     if (block.getRelative(BlockFace.UP).getType() != Material.AIR
                             || block.getRelative(BlockFace.UP).getRelative(BlockFace.UP).getType() != Material.AIR)
-                        blocks.remove(block);
+                        toRemove.add(block);
                 }
+                blocks.removeAll(toRemove);
 
                 Location loc = blocks.get(r.nextInt(blocks.size())).getLocation();
                 loc.setY(loc.getY() + 1);

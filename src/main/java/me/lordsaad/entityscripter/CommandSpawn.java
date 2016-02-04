@@ -24,7 +24,7 @@ public class CommandSpawn implements CommandExecutor {
                         EntityBuilder builder = code.interpretProperties();
                         builder.setLocation(((Player) sender).getLocation());
                         builder.spawn();
-                        code.interpretOption("properties", builder);
+                        code.resolveModule("properties", builder);
 
                     } else {
                         sender.sendMessage(ChatColor.RED + "Too few arguments. /spawnmob <mob file>");
