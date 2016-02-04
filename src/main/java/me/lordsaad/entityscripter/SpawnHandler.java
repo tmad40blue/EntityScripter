@@ -3,7 +3,6 @@ package me.lordsaad.entityscripter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
 import java.util.ArrayList;
@@ -31,36 +30,34 @@ public class SpawnHandler extends EntityBuilder {
         this.highestBlock = highestblock;
     }
 
-    public Location makeNewLocation(Location player) {
-        Random r = new Random();
-        if (r.nextInt() <= chance) {
-            List<Block> blocks = new ArrayList<>();
-            List<Block> toRemove = new ArrayList<>();
-            int radius = 30;
+    public Location makeNewLocation(Location location) {
+        if (worlds.contains(location.getWorld().getName())) {
+            Random r = new Random();
+            if (r.nextInt(100) <= chance) {
+                int max = 20;
+                int min = -20;
+                int x = location.getBlockX() + (r.nextInt(max + 1 - min) + min);
+                int y = location.getBlockY() + (r.nextInt(max + 1 - min) + min);
+                int z = location.getBlockZ() + (r.nextInt(max + 1 - min) + min);
 
-            for (int x = -radius; x <= radius; x++)
-                for (int y = -radius; y <= radius; y++)
-                    for (int z = -radius; z <= radius; z++)
-                        blocks.add(player.getBlock().getRelative(x, y, z));
+                Location loc = new Location(location.getWorld(), x, y, z);
+                if (highestBlock)
+                    if (loc.getBlock().getLightFromSky() != 15)
+                        loc.setY(location.getWorld().getHighestBlockAt(x, z).getY());
+                    else if (loc.getBlock().getLightFromSky() == 15 && loc.getBlock().getType() == Material.AIR)
+                        loc.setY(location.getWorld().getHighestBlockAt(x, z).getY());
+                if (loc.getBlock().getRelative(BlockFace.UP).getType() != Material.AIR && loc.getBlock().getRelative(BlockFace.UP).getRelative(BlockFace.UP).getType() != Material.AIR)
+                    return null;
+                if (!whitelist.isEmpty())
+                    if (!whitelist.contains(loc.getBlock().getType())) return null;
+                if (!blacklist.isEmpty())
+                    if (blacklist.contains(loc.getBlock().getType())) return null;
+                if (!biomes.isEmpty())
+                    if (!biomes.contains(loc.getBlock().getBiome())) return null;
 
-            if (worlds.contains(player.getWorld().getName())) {
-
-                for (Block block : blocks) {
-                    if (!whitelist.contains(block.getType())) toRemove.add(block);
-                    if (blacklist.contains(block.getType())) toRemove.add(block);
-                    if (!biomes.contains(block.getBiome())) toRemove.add(block);
-                    if (highestBlock) if (block.getLightFromSky() != 15) toRemove.add(block);
-                    if (block.getRelative(BlockFace.UP).getType() != Material.AIR
-                            || block.getRelative(BlockFace.UP).getRelative(BlockFace.UP).getType() != Material.AIR)
-                        toRemove.add(block);
-                }
-                blocks.removeAll(toRemove);
-
-                Location loc = blocks.get(r.nextInt(blocks.size())).getLocation();
-                loc.setY(loc.getY() + 1);
                 return loc;
-            }
-        }
-        return null;
+
+            } else return null;
+        } else return null;
     }
 }

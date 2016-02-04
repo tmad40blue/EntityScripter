@@ -55,14 +55,6 @@ public class CodeInterpreter {
         return yml.contains(option);
     }
 
-    public void resolveLocation(EntityBuilder builder) {
-
-        for (String key : yml.getConfigurationSection("spawn").getKeys(false)) {
-            String path = "spawn." + key + ".";
-
-        }
-    }
-
     private void matcher(String path, String key, EntityBuilder builder) {
         if (file != builder.getFile())
             builder.setFile(file);
@@ -135,8 +127,9 @@ public class CodeInterpreter {
                     worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path1))).map(worlds1 -> yml.getString(path1)).collect(Collectors.toList()));
 
                 if (!worlds.isEmpty() && Bukkit.getOnlinePlayers().size() > 0)
-                    for (Player p : Bukkit.getOnlinePlayers())
+                    for (Player p : Bukkit.getOnlinePlayers()) {
                         builder.setLocation(new SpawnHandler(worlds, biomes, whitelist, blacklist, chance, highestBlock).makeNewLocation(p.getLocation()));
+                    }
             }
     }
 
@@ -176,9 +169,8 @@ public class CodeInterpreter {
                     int r = 100;
                     for (String properties : yml.getConfigurationSection(path + property + "." + stuff).getKeys(false)) {
                         String path1 = path + properties + "." + stuff;
-                        if (properties.equalsIgnoreCase("material")) {
+                        if (properties.equalsIgnoreCase("material"))
                             item.setType(Material.valueOf(yml.getString(path1).toUpperCase()));
-                        }
                         if (properties.equalsIgnoreCase("durability"))
                             item.setDurability((short) yml.getInt(path1));
                         if (properties.equalsIgnoreCase("name"))
@@ -232,10 +224,14 @@ public class CodeInterpreter {
                 if (yml.contains(path1 + "x")) x = (double) injectMatches(yml.get(path1 + "x"), builder);
                 if (yml.contains(path1 + "y")) y = (double) injectMatches(yml.get(path1 + "y"), builder);
                 if (yml.contains(path1 + "z")) z = (double) injectMatches(yml.get(path1 + "z"), builder);
-                if (yml.contains(path1 + "xd")) xd = (float) injectMatches(yml.get(path1 + "xd"), builder);
-                if (yml.contains(path1 + "yd")) yd = (float) injectMatches(yml.get(path1 + "yd"), builder);
-                if (yml.contains(path1 + "zd")) zd = (float) injectMatches(yml.get(path1 + "zd"), builder);
-                if (yml.contains(path1 + "speed")) speed = (float) injectMatches(yml.get(path1 + "speed"), builder);
+                if (yml.contains(path1 + "xd"))
+                    xd = ((Double) injectMatches(yml.get(path1 + "xd"), builder)).floatValue();
+                if (yml.contains(path1 + "yd"))
+                    yd = ((Double) injectMatches(yml.get(path1 + "yd"), builder)).floatValue();
+                if (yml.contains(path1 + "zd"))
+                    zd = ((Double) injectMatches(yml.get(path1 + "zd"), builder)).floatValue();
+                if (yml.contains(path1 + "speed"))
+                    speed = ((Double) injectMatches(yml.get(path1 + "speed"), builder)).floatValue();
                 if (yml.contains(path1 + "count")) count = (int) injectMatches(yml.get(path1 + "count"), builder);
                 Location location = new Location(builder.getEntity().getLocation().getWorld()
                         , builder.getEntity().getLocation().getX() + x
