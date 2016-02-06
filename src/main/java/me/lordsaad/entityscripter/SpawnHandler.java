@@ -33,7 +33,7 @@ public class SpawnHandler extends EntityBuilder {
     public Location makeNewLocation(Location location) {
         if (worlds.contains(location.getWorld().getName())) {
             Random r = new Random();
-            if (r.nextInt(100) <= chance) {
+            if (r.nextInt(10000) <= chance) {
                 int max = 20;
                 int min = -20;
                 int x = location.getBlockX() + (r.nextInt(max + 1 - min) + min);
