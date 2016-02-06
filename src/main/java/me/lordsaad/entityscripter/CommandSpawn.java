@@ -21,7 +21,7 @@ public class CommandSpawn implements CommandExecutor {
                     if (args.length >= 1) {
                         File f = new File(EntityScripter.plugin.getDataFolder() + "/mobs/" + args[0] + ".txt");
                         CodeInterpreter code = new CodeInterpreter(f);
-                        EntityBuilder builder = code.interpretProperties();
+                        EntityBuilder builder = code.create();
                         builder.setLocation(((Player) sender).getLocation());
                         builder.spawn();
                         code.resolveModule("properties", builder);

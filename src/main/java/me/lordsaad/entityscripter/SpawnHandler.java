@@ -41,13 +41,16 @@ public class SpawnHandler extends EntityBuilder {
                 int z = location.getBlockZ() + (r.nextInt(max + 1 - min) + min);
 
                 Location loc = new Location(location.getWorld(), x, y, z);
-                if (highestBlock)
+                if (highestBlock) {
                     if (loc.getBlock().getLightFromSky() != 15)
                         loc.setY(location.getWorld().getHighestBlockAt(x, z).getY());
                     else if (loc.getBlock().getLightFromSky() == 15 && loc.getBlock().getType() == Material.AIR)
                         loc.setY(location.getWorld().getHighestBlockAt(x, z).getY());
-                if (loc.getBlock().getRelative(BlockFace.UP).getType() != Material.AIR && loc.getBlock().getRelative(BlockFace.UP).getRelative(BlockFace.UP).getType() != Material.AIR)
+                    else if (loc.getBlock().getLightFromSky() == 15 && loc.getBlock().getRelative(BlockFace.DOWN).getType() == Material.AIR)
+                        loc.setY(location.getWorld().getHighestBlockAt(x, z).getY());
+                } else if (loc.getBlock().getRelative(BlockFace.UP).getType() != Material.AIR && loc.getBlock().getRelative(BlockFace.UP).getRelative(BlockFace.UP).getType() != Material.AIR) {
                     return null;
+                }
                 if (!whitelist.isEmpty())
                     if (!whitelist.contains(loc.getBlock().getType())) return null;
                 if (!blacklist.isEmpty())

@@ -25,10 +25,9 @@ public class HeartBeat extends BukkitRunnable {
             if (file != null) {
                 CodeInterpreter code = new CodeInterpreter(file);
                 if (code.hasOption("properties")) {
-                    EntityBuilder builder = code.interpretProperties();
-                    code.resolveModule("properties", builder);
-                    if (builder.getLocation() != null)
-                        builder.spawn();
+                    EntityBuilder builder = code.create();
+                    code.create();
+                    if (builder.getLocation() != null) builder.spawn();
                 }
             }
     }

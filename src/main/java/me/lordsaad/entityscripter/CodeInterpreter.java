@@ -28,272 +28,270 @@ public class CodeInterpreter {
         yml = YamlConfiguration.loadConfiguration(file);
     }
 
-    public EntityBuilder interpretProperties() {
+    public EntityBuilder create() {
         EntityBuilder builder = new EntityBuilder();
         if (!yml.contains("properties")) return null;
-
-        for (String property : yml.getConfigurationSection("properties").getKeys(false))
-            matcher("properties.", property, builder);
+        matcher("properties.", builder);
 
         return builder;
     }
 
     public void resolveModule(String module, EntityBuilder builder) {
-        module = module + ".";
+        module += ".";
         if (builder.getEntity() == null) return;
         if (!yml.contains(module)) return;
 
-        for (String property : yml.getConfigurationSection(module).getKeys(false)) {
-            matcher(module, property, builder);
-            secondaryMatcher(property, module + property, builder.getEntity());
-            tertiaryMatcher(module, property, builder);
-            builder.inject(builder.getEntity());
-        }
+        matcher(module, builder);
+        secondaryMatcher(module, builder.getEntity());
+        tertiaryMatcher(module, builder);
+        builder.inject(builder.getEntity());
     }
 
     public boolean hasOption(String option) {
         return yml.contains(option);
     }
 
-    private void matcher(String path, String key, EntityBuilder builder) {
+    private void matcher(String path, EntityBuilder builder) {
         if (file != builder.getFile())
             builder.setFile(file);
 
-        if (key.equalsIgnoreCase("set_entity_type"))
+        if (yml.contains(path + "set_entity_type"))
             builder.setEntityType(EntityType.valueOf(yml.getString(path + "set_entity_type").toUpperCase()));
 
-        if (key.equalsIgnoreCase("set_custom_name"))
+        if (yml.contains(path + "set_custom_name"))
             builder.setCustomName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "set_custom_name")));
 
-        if (key.equalsIgnoreCase("set_custom_name_visible"))
+        if (yml.contains(path + "set_custom_name_visible"))
             builder.setCustomNameVisible((yml.getBoolean(path + "set_custom_name_visible")));
 
-        if (key.equalsIgnoreCase("set_no_ai"))
+        if (yml.contains(path + "set_no_ai"))
             builder.setNoAI(yml.getBoolean(path + "set_no_ai"));
 
-        if (key.equalsIgnoreCase("set_silent"))
+        if (yml.contains(path + "set_silent"))
             builder.setSilent(yml.getBoolean(path + "set_silent"));
 
-        if (key.equalsIgnoreCase("custom_nbt"))
+        if (yml.contains(path + "custom_nbt"))
             for (String nbt : yml.getConfigurationSection(path + "custom_nbt").getKeys(false))
-                if (StringUtils.isNumeric(yml.getString(path + "custom_nbt" + nbt)))
-                    builder.addCustomNBT(nbt, Integer.parseInt(yml.getString(path + "custom_nbt" + nbt)));
-                else builder.addCustomNBT(nbt, yml.getString(path + "custom_nbt" + nbt));
+                if (StringUtils.isNumeric(yml.getString(path + "custom_nbt." + nbt)))
+                    builder.addCustomNBT(nbt, Integer.parseInt(yml.getString(path + "custom_nbt." + nbt)));
+                else builder.addCustomNBT(nbt, yml.getString(path + "custom_nbt." + nbt));
 
-        if (key.equalsIgnoreCase("set_location")) {
-            for (String parameter : yml.getConfigurationSection(path + "set_location").getKeys(false)) {
+        if (yml.contains(path + "set_location")) {
+            double x = 0, y = 0, z = 0;
+            World world = null;
+            float pitch = 0, yaw = 0;
 
-                double x = 0, y = 0, z = 0;
-                World world = null;
-                float pitch = 0, yaw = 0;
+            if (yml.contains(path + "set_location.x")) x = yml.getDouble(path + "set_location.x");
+            if (yml.contains(path + "set_location.y")) y = yml.getDouble(path + "set_location.y");
+            if (yml.contains(path + "set_location.z")) z = yml.getDouble(path + "set_location.z");
+            if (yml.contains(path + "set_location.world"))
+                world = Bukkit.getWorld(yml.getString(path + "set_location.world"));
+            if (yml.contains(path + "set_location.pitch" + pitch))
+                pitch = (float) yml.getDouble(path + "set_location.pitch");
+            if (yml.contains(path + "set_location.yaw")) yaw = (float) yml.getDouble(path + "set_location.yaw");
 
-                if (parameter.equalsIgnoreCase("x")) x = yml.getDouble(path);
-                if (parameter.equalsIgnoreCase("y")) y = yml.getDouble(path);
-                if (parameter.equalsIgnoreCase("z")) z = yml.getDouble(path);
-                if (parameter.equalsIgnoreCase("world"))
-                    world = Bukkit.getWorld(yml.getString(path));
-                if (parameter.equalsIgnoreCase("pitch"))
-                    pitch = (float) yml.getDouble(path);
-                if (parameter.equalsIgnoreCase("yaw")) yaw = (float) yml.getDouble(path);
+            if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
 
-                if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
-            }
+        } else if (yml.contains(path + "spawn_naturally")) {
 
-        } else if (key.equalsIgnoreCase("spawn_naturally"))
-            for (String parameter : yml.getConfigurationSection(path + "spawn_naturally").getKeys(false)) {
-                String path1 = path + "spawn_naturally." + parameter;
+            double chance = 10;
+            boolean highestBlock = false;
+            List<Biome> biomes = new ArrayList<>();
+            List<Material> blacklist = new ArrayList<>();
+            List<Material> whitelist = new ArrayList<>();
+            List<String> worlds = new ArrayList<>();
 
-                double chance = 10;
-                boolean highestBlock = false;
-                List<Biome> biomes = new ArrayList<>();
-                List<Material> blacklist = new ArrayList<>();
-                List<Material> whitelist = new ArrayList<>();
-                List<String> worlds = new ArrayList<>();
+            String path1 = path + "spawn_naturally.";
 
-                if (parameter.equalsIgnoreCase("biomes"))
-                    biomes.addAll(yml.getStringList(path1).stream().filter(biome -> Biome.valueOf(biome) != null).map(Biome::valueOf).collect(Collectors.toList()));
-                else if (parameter.equalsIgnoreCase("biome"))
-                    if (Biome.valueOf(yml.getString(path1)) != null) biomes.add(Biome.valueOf(yml.getString(path1)));
-                if (parameter.equalsIgnoreCase("set_on_highest_block")) highestBlock = yml.getBoolean(path1);
-                if (parameter.equalsIgnoreCase("chance")) chance = yml.getDouble(path1);
-                if (parameter.equalsIgnoreCase("whitelist_blocks"))
-                    whitelist.addAll(yml.getStringList(path1).stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
-                else if (parameter.equalsIgnoreCase("blacklist_blocks"))
-                    blacklist.addAll(yml.getStringList(path1).stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
-                if (parameter.equalsIgnoreCase("worlds"))
-                    for (String world : yml.getStringList("worlds"))
-                        worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(world)).map(worlds1 -> world).collect(Collectors.toList()));
-                else if (parameter.equalsIgnoreCase("world"))
-                    worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path1))).map(worlds1 -> yml.getString(path1)).collect(Collectors.toList()));
+            if (yml.contains(path1 + "biomes"))
+                biomes.addAll(yml.getStringList(path1 + "biomes").stream().filter(biome -> Biome.valueOf(biome) != null).map(Biome::valueOf).collect(Collectors.toList()));
+            else if (yml.contains(path1 + "biome"))
+                if (Biome.valueOf(yml.getString(path1 + "biome")) != null)
+                    biomes.add(Biome.valueOf(yml.getString(path1 + "biome")));
+            if (yml.contains(path1 + "set_on_highest_block"))
+                highestBlock = yml.getBoolean(path1 + "set_on_highest_block");
+            if (yml.contains(path1 + "chance")) chance = yml.getDouble(path1 + "chance");
+            if (yml.contains(path1 + "whitelist_blocks"))
+                whitelist.addAll(yml.getStringList(path1 + "whitelist_blocks").stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
+            else if (yml.contains(path1 + "blacklist_blocks"))
+                blacklist.addAll(yml.getStringList(path1 + "blacklist_blocks").stream().filter(material -> Material.valueOf(material) != null).map(Material::valueOf).collect(Collectors.toList()));
+            if (yml.contains(path1 + "worlds"))
+                for (String world : yml.getStringList("worlds"))
+                    worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(world)).map(worlds1 -> world).collect(Collectors.toList()));
+            else if (yml.contains(path1 + "world"))
+                worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path1 + "world"))).map(worlds1 -> yml.getString(path1 + "world")).collect(Collectors.toList()));
 
-                if (!worlds.isEmpty() && Bukkit.getOnlinePlayers().size() > 0)
-                    for (Player p : Bukkit.getOnlinePlayers()) {
-                        builder.setLocation(new SpawnHandler(worlds, biomes, whitelist, blacklist, chance, highestBlock).makeNewLocation(p.getLocation()));
-                    }
-            }
+            if (!worlds.isEmpty() && Bukkit.getOnlinePlayers().size() > 0)
+                for (Player p : Bukkit.getOnlinePlayers())
+                    builder.setLocation(new SpawnHandler(worlds, biomes, whitelist, blacklist, chance, highestBlock).makeNewLocation(p.getLocation()));
+        }
+
     }
 
-    public void secondaryMatcher(String property, String path, Entity entity) {
+    public void secondaryMatcher(String path, Entity entity) {
         if (entity == null) return;
 
         if (entity.getType() == EntityType.ZOMBIE)
-            if (property.equalsIgnoreCase("set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path));
+            if (yml.contains(path + "set_villager")) ((Zombie) entity).setBaby(yml.getBoolean(path + "set_villager"));
 
         if (entity instanceof Ageable) {
             Ageable ageable = (Ageable) entity;
-            if (property.equalsIgnoreCase("set_age")) ageable.setAge(yml.getInt(path));
-            if (property.equalsIgnoreCase("set_age_lock")) ageable.setAgeLock(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_breed")) ageable.setBreed(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_baby")) if (yml.getBoolean(path)) ageable.setBaby();
+            if (yml.contains(path + "set_age")) ageable.setAge(yml.getInt(path + "set_age"));
+            if (yml.contains(path + "set_age_lock")) ageable.setAgeLock(yml.getBoolean(path + "set_age_lock"));
+            if (yml.contains(path + "set_breed")) ageable.setBreed(yml.getBoolean(path + "set_breed"));
+            if (yml.contains(path + "set_baby")) if (yml.getBoolean(path + "set_baby")) ageable.setBaby();
             else ageable.setAdult();
         }
 
         if (entity instanceof LivingEntity) {
             LivingEntity livingEntity = (LivingEntity) entity;
-            if (property.equalsIgnoreCase("set_health")) livingEntity.setHealth(yml.getDouble(path));
-            if (property.equalsIgnoreCase("set_despawnable")) livingEntity.setRemoveWhenFarAway(yml.getBoolean(path));
-            if (property.equalsIgnoreCase("set_passenger_of")) {
-                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path) + ".txt");
+            if (yml.contains(path + "set_health")) livingEntity.setHealth(yml.getDouble(path + "set_health"));
+            if (yml.contains(path + "set_despawnable"))
+                livingEntity.setRemoveWhenFarAway(yml.getBoolean(path + "set_despawnable"));
+            if (yml.contains(path + "set_passenger_of")) {
+                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path + "set_passenger_of") + ".txt");
                 if (f.exists()) {
                     CodeInterpreter interpreter = new CodeInterpreter(f);
-                    EntityBuilder builder2 = interpreter.interpretProperties();
+                    EntityBuilder builder2 = interpreter.create();
                     builder2.spawn();
                     builder2.getEntity().setPassenger(livingEntity);
                 }
             }
-            if (property.equalsIgnoreCase("set_equipment")) {
+
+            if (yml.contains(path + "set_equipment")) {
                 Random random = new Random();
-                for (String stuff : yml.getConfigurationSection(path + property).getKeys(false)) {
+                for (String equipment : yml.getConfigurationSection(path + "set_equipment").getKeys(false)) {
                     ItemStack item = new ItemStack(Material.AIR);
                     ItemMeta meta = item.getItemMeta();
-                    int r = 100;
-                    for (String properties : yml.getConfigurationSection(path + property + "." + stuff).getKeys(false)) {
-                        String path1 = path + properties + "." + stuff;
-                        if (properties.equalsIgnoreCase("material"))
-                            item.setType(Material.valueOf(yml.getString(path1).toUpperCase()));
-                        if (properties.equalsIgnoreCase("durability"))
-                            item.setDurability((short) yml.getInt(path1));
-                        if (properties.equalsIgnoreCase("name"))
-                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)));
-                        if (properties.equalsIgnoreCase("lore"))
-                            meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)).split("\n")));
-                        if (properties.equalsIgnoreCase("chance_of_dropping"))
-                            if (stuff.equalsIgnoreCase("boots"))
-                                livingEntity.getEquipment().setBootsDropChance(yml.getInt(path1) / 100);
-                            else if (stuff.equalsIgnoreCase("leggings"))
-                                livingEntity.getEquipment().setLeggingsDropChance(yml.getInt(path1) / 100);
-                            else if (stuff.equalsIgnoreCase("chestplate"))
-                                livingEntity.getEquipment().setChestplateDropChance(yml.getInt(path1) / 100);
-                            else if (stuff.equalsIgnoreCase("helmet"))
-                                livingEntity.getEquipment().setHelmetDropChance(yml.getInt(path1) / 100);
-                            else if (stuff.equalsIgnoreCase("hand"))
-                                livingEntity.getEquipment().setItemInHandDropChance(yml.getInt(path1) / 100);
-                        if (properties.equalsIgnoreCase("chance_of_appearing"))
-                            r = yml.getInt(path1);
+                    int r;
+
+                    String path1 = path + "set_equipment." + equipment + ".";
+                    if (yml.contains(path1 + "material"))
+                        item.setType(Material.valueOf(yml.getString(path1).toUpperCase()));
+                    if (yml.contains(path1 + "durability"))
+                        item.setDurability((short) yml.getInt(path1));
+                    if (yml.contains(path1 + "name"))
+                        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)));
+                    if (yml.contains(path1 + "lore"))
+                        meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('&', yml.getString(path1)).split("\n")));
+                    if (yml.contains(path1 + "chance_of_dropping")) {
+                        int chance = yml.getInt(path1 + "chance_of_dropping") / 100;
+                        if (equipment.equalsIgnoreCase("boots"))
+                            livingEntity.getEquipment().setBootsDropChance(chance);
+                        else if (equipment.equalsIgnoreCase("leggings"))
+                            livingEntity.getEquipment().setLeggingsDropChance(chance);
+                        else if (equipment.equalsIgnoreCase("chestplate"))
+                            livingEntity.getEquipment().setChestplateDropChance(chance);
+                        else if (equipment.equalsIgnoreCase("helmet"))
+                            livingEntity.getEquipment().setHelmetDropChance(chance);
+                        else if (equipment.equalsIgnoreCase("hand"))
+                            livingEntity.getEquipment().setItemInHandDropChance(chance);
                     }
 
-                    if (random.nextInt(100) <= r) {
-                        item.setItemMeta(meta);
-                        if (stuff.equalsIgnoreCase("boots"))
-                            livingEntity.getEquipment().setBoots(item);
-                        else if (stuff.equalsIgnoreCase("leggings"))
-                            livingEntity.getEquipment().setLeggings(item);
-                        else if (stuff.equalsIgnoreCase("chestplate"))
-                            livingEntity.getEquipment().setChestplate(item);
-                        else if (stuff.equalsIgnoreCase("helmet"))
-                            livingEntity.getEquipment().setHelmet(item);
-                        else if (stuff.equalsIgnoreCase("hand"))
-                            livingEntity.getEquipment().setItemInHand(item);
+                    if (yml.contains(path1 + "chance_of_appearing")) {
+                        r = yml.getInt(path1 + "chance_of_appearing");
+
+                        if (random.nextInt(100) <= r) {
+                            item.setItemMeta(meta);
+                            if (equipment.equalsIgnoreCase("boots"))
+                                livingEntity.getEquipment().setBoots(item);
+                            else if (equipment.equalsIgnoreCase("leggings"))
+                                livingEntity.getEquipment().setLeggings(item);
+                            else if (equipment.equalsIgnoreCase("chestplate"))
+                                livingEntity.getEquipment().setChestplate(item);
+                            else if (equipment.equalsIgnoreCase("helmet"))
+                                livingEntity.getEquipment().setHelmet(item);
+                            else if (equipment.equalsIgnoreCase("hand"))
+                                livingEntity.getEquipment().setItemInHand(item);
+                        }
                     }
                 }
             }
         }
     }
 
-    private void tertiaryMatcher(String path, String key, EntityBuilder builder) {
+    private void tertiaryMatcher(String path, EntityBuilder builder) {
         if (builder.getEntity() == null) return;
 
-        if (key.equalsIgnoreCase("particles"))
+        if (yml.contains(path + "particles"))
             for (String particles : yml.getConfigurationSection(path + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
-
-                String path1 = path + "particles." + particles + ".";
-                double x = 0, y = 0, z = 0;
-                int count = 10;
-                float xd = 0, yd = 0, zd = 0, speed = 0;
-                if (yml.contains(path1 + "x")) x = (double) injectMatches(yml.get(path1 + "x"), builder);
-                if (yml.contains(path1 + "y")) y = (double) injectMatches(yml.get(path1 + "y"), builder);
-                if (yml.contains(path1 + "z")) z = (double) injectMatches(yml.get(path1 + "z"), builder);
-                if (yml.contains(path1 + "xd"))
-                    xd = ((Double) injectMatches(yml.get(path1 + "xd"), builder)).floatValue();
-                if (yml.contains(path1 + "yd"))
-                    yd = ((Double) injectMatches(yml.get(path1 + "yd"), builder)).floatValue();
-                if (yml.contains(path1 + "zd"))
-                    zd = ((Double) injectMatches(yml.get(path1 + "zd"), builder)).floatValue();
-                if (yml.contains(path1 + "speed"))
-                    speed = ((Double) injectMatches(yml.get(path1 + "speed"), builder)).floatValue();
-                if (yml.contains(path1 + "count")) count = (int) injectMatches(yml.get(path1 + "count"), builder);
-                Location location = new Location(builder.getEntity().getLocation().getWorld()
-                        , builder.getEntity().getLocation().getX() + x
-                        , builder.getEntity().getLocation().getY() + y
-                        , builder.getEntity().getLocation().getZ() + z);
-                particleEffect.display(xd, yd, zd, speed, count, location, 100);
+                if (particleEffect != null) {
+                    String path1 = path + "particles." + particles + ".";
+                    double x = 0, y = 0, z = 0;
+                    int count = 10;
+                    float xd = 0, yd = 0, zd = 0, speed = 0;
+                    if (yml.contains(path1 + "x")) x = (double) injectMatches(yml.get(path1 + "x"), builder);
+                    if (yml.contains(path1 + "y")) y = (double) injectMatches(yml.get(path1 + "y"), builder);
+                    if (yml.contains(path1 + "z")) z = (double) injectMatches(yml.get(path1 + "z"), builder);
+                    if (yml.contains(path1 + "xd"))
+                        xd = ((Double) injectMatches(yml.get(path1 + "xd"), builder)).floatValue();
+                    if (yml.contains(path1 + "yd"))
+                        yd = ((Double) injectMatches(yml.get(path1 + "yd"), builder)).floatValue();
+                    if (yml.contains(path1 + "zd"))
+                        zd = ((Double) injectMatches(yml.get(path1 + "zd"), builder)).floatValue();
+                    if (yml.contains(path1 + "speed"))
+                        speed = ((Double) injectMatches(yml.get(path1 + "speed"), builder)).floatValue();
+                    if (yml.contains(path1 + "count")) count = (int) injectMatches(yml.get(path1 + "count"), builder);
+                    Location location = new Location(builder.getEntity().getLocation().getWorld()
+                            , builder.getEntity().getLocation().getX() + x
+                            , builder.getEntity().getLocation().getY() + y
+                            , builder.getEntity().getLocation().getZ() + z);
+                    particleEffect.display(xd, yd, zd, speed, count, location, 100);
+                }
             }
 
-        if (key.equalsIgnoreCase("potion_effects"))
+        if (yml.contains(path + "potion_effects"))
             for (String effectType : yml.getConfigurationSection(path + "potion_effects").getKeys(false)) {
                 PotionEffectType potionEffectType = PotionEffectType.getByName(effectType);
-
-                for (String parameter : yml.getConfigurationSection(path + "potion_effects." + effectType).getKeys(false)) {
-
+                if (potionEffectType != null) {
+                    String path1 = path + "potion_effects." + effectType + ".";
                     int duration = 9999, amplifier = 1;
                     boolean ambient = false, particles = true;
 
-                    if (parameter.equalsIgnoreCase("duration"))
-                        duration = (int) injectMatches(yml.get(path + "potion_effects." + effectType + ".duration"), builder);
-                    if (parameter.equalsIgnoreCase("amplifier"))
-                        amplifier = (int) injectMatches(yml.get(path + "potion_effects." + effectType + ".amplifier"), builder);
-                    if (parameter.equalsIgnoreCase("ambient"))
-                        ambient = (boolean) injectMatches(yml.get(path + "potion_effects." + effectType + ".ambient"), builder);
-                    if (parameter.equalsIgnoreCase("particles"))
-                        particles = (boolean) injectMatches(yml.get(path + "potion_effects." + effectType + ".particles"), builder);
+                    if (yml.contains(path1 + "duration"))
+                        duration = (int) injectMatches(yml.get(path1 + "duration"), builder);
+                    if (yml.contains(path1 + "amplifier"))
+                        amplifier = (int) injectMatches(yml.get(path1 + "amplifier"), builder);
+                    if (yml.contains(path1 + "ambient"))
+                        ambient = (boolean) injectMatches(yml.get(path1 + "ambient"), builder);
+                    if (yml.contains(path1 + "particles"))
+                        particles = (boolean) injectMatches(yml.get(path1 + "particles"), builder);
 
                     builder.addPotionEffect(new PotionEffect(potionEffectType, duration, amplifier, ambient, particles));
                 }
             }
 
-        if (key.equalsIgnoreCase("run_command"))
-            for (String ink : yml.getConfigurationSection(path + "run_command").getKeys(false)) {
-                List<UUID> senders = new ArrayList<>();
-                String cmd = null;
+        if (yml.contains(path + "run_command")) {
+            List<UUID> senders = new ArrayList<>();
+            String cmd = null;
 
-                if (ink.contains("sender"))
-                    if (yml.getString(path + "run_command.sender").split("=").length > 0)
-                        senders = Utils.targetUUIDResolver(yml.getString(path + "run_command.sender").split("=")[1], builder.getEntity());
+            if (yml.contains(path + "run_command.sender"))
+                if (yml.getString(path + "run_command.sender").split("=").length > 0)
+                    senders = Utils.targetUUIDResolver(yml.getString(path + "run_command.sender").split("=")[1], builder.getEntity());
 
-                if (ink.equalsIgnoreCase("cmd")) cmd = yml.getString(path + "run_command.cmd");
+            if (yml.contains(path + "cmd")) cmd = yml.getString(path + "run_command.cmd");
 
-                if (!senders.isEmpty())
-                    for (Player players : Bukkit.getOnlinePlayers()) {
-                        if (senders.contains(players.getUniqueId()))
-                            Bukkit.dispatchCommand(players, String.valueOf(injectMatches(cmd, builder)));
-                    }
-                else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.valueOf(injectMatches(cmd, builder)));
-            }
+            if (!senders.isEmpty())
+                for (Player players : Bukkit.getOnlinePlayers()) {
+                    if (senders.contains(players.getUniqueId()))
+                        Bukkit.dispatchCommand(players, String.valueOf(injectMatches(cmd, builder)));
+                }
+            else Bukkit.dispatchCommand(Bukkit.getConsoleSender(), String.valueOf(injectMatches(cmd, builder)));
+        }
 
-        if (key.equalsIgnoreCase("send_message"))
-            for (String ink : yml.getConfigurationSection(path + "send_message").getKeys(false)) {
-                String to = "@a";
-                String msg = null;
-                if (ink.equalsIgnoreCase("to")) to = yml.getString(path + "send_message.to");
-                if (ink.equalsIgnoreCase("msg")) msg = yml.getString(path + "send_message.msg");
-                List<UUID> entities = Utils.targetUUIDResolver(to, builder.getEntity());
-                for (World world : Bukkit.getWorlds())
-                    for (Entity entity : world.getEntities())
-                        if (entities.contains(entity.getUniqueId()))
-                            if (msg != null)
-                                entity.sendMessage((String) injectMatches(ChatColor.translateAlternateColorCodes('&', msg), builder));
-            }
+        if (yml.contains(path + "send_message")) {
+            String to = "@a";
+            String msg = null;
+            if (yml.contains(path + "send_message.to")) to = yml.getString(path + "send_message.to");
+            if (yml.contains(path + "send_message.msg")) msg = yml.getString(path + "send_message.msg");
+            List<UUID> entities = Utils.targetUUIDResolver(to, builder.getEntity());
+            for (World world : Bukkit.getWorlds())
+                for (Entity entity : world.getEntities())
+                    if (entities.contains(entity.getUniqueId()))
+                        if (msg != null)
+                            entity.sendMessage((String) injectMatches(ChatColor.translateAlternateColorCodes('&', msg), builder));
+        }
     }
 
     public Object injectMatches(Object obj) {
