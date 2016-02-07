@@ -2,6 +2,7 @@ package me.lordsaad.entityscripter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -87,5 +88,29 @@ public class Utils {
         }
 
         return entities;
+    }
+
+    public static String getEquipmentType(Material mat) {
+        if (mat == Material.DIAMOND_BOOTS
+                || mat == Material.CHAINMAIL_BOOTS
+                || mat == Material.IRON_BOOTS
+                || mat == Material.LEATHER_BOOTS) return "boots";
+
+        else if (mat == Material.DIAMOND_LEGGINGS
+                || mat == Material.CHAINMAIL_LEGGINGS
+                || mat == Material.IRON_LEGGINGS
+                || mat == Material.LEATHER_LEGGINGS) return "leggings";
+
+        else if (mat == Material.DIAMOND_CHESTPLATE
+                || mat == Material.CHAINMAIL_CHESTPLATE
+                || mat == Material.IRON_CHESTPLATE
+                || mat == Material.LEATHER_CHESTPLATE) return "chestplate";
+
+        else if (mat == Material.DIAMOND_HELMET
+                || mat == Material.CHAINMAIL_HELMET
+                || mat == Material.IRON_HELMET
+                || mat == Material.LEATHER_HELMET) return "helmet";
+
+        else return "hand";
     }
 }
