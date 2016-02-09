@@ -3,12 +3,14 @@ package me.lordsaad.entityscripter;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.bukkit.Location;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +43,18 @@ public class EntityBuilder {
             this.file = file;
             if (entity instanceof LivingEntity) {
                 this.potionEffects = (List<PotionEffect>) ((LivingEntity) entity).getActivePotionEffects();
+            }
+
+            try {
+                File f = new File(EntityScripter.plugin.getDataFolder(), "entities.yml");
+                if (!f.exists()) f.createNewFile();
+                YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
+                List<String> list = yml.getStringList("entities");
+                list.add(entity.getUniqueId() + ";" + file.getName());
+                yml.set("entities", list);
+                yml.save(f);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

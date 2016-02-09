@@ -1,11 +1,16 @@
 package me.lordsaad.entityscripter;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Saad on 1/27/2016.
@@ -34,6 +39,16 @@ public class MobEvents implements Listener {
             EntityBuilder builder = new EntityBuilder(event.getEntity(), EntityScripter.mobs.get(event.getEntity().getUniqueId()));
             interpreter.resolveModule("receive_damage", builder);
             builder.inject(event.getEntity());
+
+            File f = new File(EntityScripter.plugin.getDataFolder(), "entities.yml");
+            if (f.exists()) {
+                YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
+                List<String> list = yml.getStringList("entities");
+                for (int i = 0; i <= list.size() - 1; i++)
+                    if (UUID.fromString(list.get(i).split(";")[0]).equals(event.getEntity().getUniqueId()))
+                        list.remove(i);
+                yml.set("entities", list);
+            }
         }
     }
 
