@@ -35,14 +35,12 @@ public class EntityBuilder {
         this.entity = entity;
     }
 
-    public Entity spawn() {
+    public void spawn() {
         if (location != null && file != null) {
             Entity entity = location.getWorld().spawnEntity(location, getEntityType());
             inject(entity);
             EntityScripter.mobs.put(entity.getUniqueId(), file);
-            return entity;
-
-        } else return null;
+        }
     }
 
     public void inject(Entity entity) {

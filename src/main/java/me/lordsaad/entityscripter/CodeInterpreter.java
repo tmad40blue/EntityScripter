@@ -30,21 +30,28 @@ public class CodeInterpreter {
 
     public EntityBuilder create() {
         EntityBuilder builder = new EntityBuilder();
+        if (file != builder.getFile())
+            builder.setFile(file);
         if (!yml.contains("properties")) return null;
+
         matcher("properties.", builder);
 
-        return builder;
+        if (builder.getLocation() != null)
+            return builder;
+        else return null;
     }
 
-    public void resolveModule(String module, EntityBuilder builder) {
-        module += ".";
-        if (builder.getEntity() == null) return;
-        if (!yml.contains(module)) return;
+    public EntityBuilder resolveModule(String module, EntityBuilder builder) {
+        if (!yml.contains(module)) return builder;
+        if (builder == null) return builder;
+        if (builder.getLocation() == null) return builder;
+        if (builder.getEntity() == null) return builder;
 
+        module += ".";
         matcher(module, builder);
         secondaryMatcher(module, builder.getEntity());
         tertiaryMatcher(module, builder);
-        builder.inject(builder.getEntity());
+        return builder;
     }
 
     public boolean hasOption(String option) {
@@ -52,9 +59,6 @@ public class CodeInterpreter {
     }
 
     private void matcher(String path, EntityBuilder builder) {
-        if (file != builder.getFile())
-            builder.setFile(file);
-
         if (yml.contains(path + "set_entity_type"))
             builder.setEntityType(EntityType.valueOf(yml.getString(path + "set_entity_type").toUpperCase()));
 
@@ -309,16 +313,18 @@ public class CodeInterpreter {
                     objs = extracted.split(",");
 
                     for (int i = 0; i <= objs.length; i = i + 2) {
-                        if (objs[i] instanceof Integer && objs[i++] instanceof Integer) {
-                            int first = (int) objs[i], second = (int) objs[++i];
-                            return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + r.nextInt(((second - first) + 1) + first));
+                        if (objs.length >= i) {
+                            if (objs[i] instanceof Integer && objs[i++] instanceof Integer) {
+                                int first = (int) objs[i], second = (int) objs[++i];
+                                return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + r.nextInt(((second - first) + 1) + first));
+                            }
+
+                            if (objs[i] instanceof Boolean || objs[++i] instanceof Boolean)
+                                return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + r.nextBoolean());
+
+                            if (objs[i] instanceof String)
+                                return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + objs[r.nextInt(objs.length - 1)]);
                         }
-
-                        if (objs[i] instanceof Boolean || objs[++i] instanceof Boolean)
-                            return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + r.nextBoolean());
-
-                        if (objs[i] instanceof String)
-                            return string.replace(string.substring(string.indexOf("%randomize["), string.indexOf("]") + 1), "" + objs[r.nextInt(objs.length - 1)]);
                     }
                 } else return obj;
             } else return obj;
