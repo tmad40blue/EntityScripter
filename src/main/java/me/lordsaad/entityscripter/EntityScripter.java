@@ -26,7 +26,7 @@ public class EntityScripter extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MobEvents(), this);
         new HeartBeat().runTaskTimer(this, 1, 1);
 
-        File f = new File(getDataFolder() + "tmp.yml");
+        File f = new File(getDataFolder(), "tmp.yml");
         if (f.exists()) {
             YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
             for (String string : yml.getStringList("mobs"))
@@ -36,7 +36,7 @@ public class EntityScripter extends JavaPlugin {
 
     public void onDisable() {
         try {
-            File f = new File(getDataFolder() + "tmp.yml");
+            File f = new File(getDataFolder(), "tmp.yml");
             f.createNewFile();
 
             YamlConfiguration yml = YamlConfiguration.loadConfiguration(f);
