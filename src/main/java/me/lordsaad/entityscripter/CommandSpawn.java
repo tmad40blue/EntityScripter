@@ -1,5 +1,6 @@
 package me.lordsaad.entityscripter;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,13 +20,17 @@ public class CommandSpawn implements CommandExecutor {
             if (sender instanceof Player) {
                 if (sender.hasPermission("entityscripter.spawn")) {
                     if (args.length >= 1) {
-                        File f = new File(EntityScripter.plugin.getDataFolder() + "/mobs/" + args[0] + ".txt");
-                        CodeInterpreter code = new CodeInterpreter(f);
-                        EntityBuilder builder = code.create();
-                        builder.setLocation(((Player) sender).getLocation());
-                        builder.spawn();
-                        code.resolveModule("properties", builder);
-
+                        File f = new File(EntityScripter.plugin.getDataFolder() + "/mobs/" + args[0] + ".yml");
+                        if (f.exists()) {
+                            CodeInterpreter code = new CodeInterpreter(f);
+                            EntityBuilder builder = code.create();
+                            builder.setLocation(((Player) sender).getLocation());
+                            builder.spawn();
+                            code.resolveModule("properties", builder);
+                            builder.inject(builder.getEntity());
+                        } else Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] Could not find mob file with name '"
+                                + ChatColor.YELLOW + args[0]
+                                + ChatColor.RED + "'.");
                     } else {
                         sender.sendMessage(ChatColor.RED + "Too few arguments. /spawnmob <mob file>");
                     }

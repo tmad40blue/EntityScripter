@@ -60,6 +60,14 @@ public class CodeInterpreter {
     private void matcher(String path, EntityBuilder builder) {
         if (yml.contains(path + "set_entity_type"))
             builder.setEntityType(EntityType.valueOf(yml.getString(path + "set_entity_type").toUpperCase()));
+        else {
+            Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] Entity type not specified for '"
+                    + ChatColor.YELLOW + file.getName()
+                    + ChatColor.RED + "' at"
+                    + ChatColor.YELLOW + (path + "set_entity_type")
+                    + ChatColor.RED + "'.");
+            return;
+        }
 
         if (yml.contains(path + "set_custom_name"))
             builder.setCustomName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "set_custom_name")));
@@ -94,6 +102,11 @@ public class CodeInterpreter {
             if (yml.contains(path + "set_location.yaw")) yaw = (float) yml.getDouble(path + "set_location.yaw");
 
             if (world != null) builder.setLocation(new Location(world, x, y, z, pitch, yaw));
+            else Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] No world specified to spawn mob '"
+                    + ChatColor.YELLOW + file.getName()
+                    + ChatColor.RED + "' in at"
+                    + ChatColor.YELLOW + (path + "set_location.world")
+                    + ChatColor.RED + "'.");
 
         } else if (yml.contains(path + "spawn_naturally")) {
 
@@ -123,6 +136,11 @@ public class CodeInterpreter {
                     worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(world)).map(worlds1 -> world).collect(Collectors.toList()));
             else if (yml.contains(path1 + "world"))
                 worlds.addAll(Bukkit.getWorlds().stream().filter(worlds1 -> worlds1.getName().equals(yml.getString(path1 + "world"))).map(worlds1 -> yml.getString(path1 + "world")).collect(Collectors.toList()));
+            else Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] No world specified to spawn mob '"
+                        + ChatColor.YELLOW + file.getName()
+                        + ChatColor.RED + "' in at"
+                        + ChatColor.YELLOW + (path1 + "world")
+                        + ChatColor.RED + "'.");
 
             if (!worlds.isEmpty() && Bukkit.getOnlinePlayers().size() > 0)
                 for (Player p : Bukkit.getOnlinePlayers())
@@ -164,7 +182,13 @@ public class CodeInterpreter {
                     EntityBuilder builder2 = interpreter.create();
                     builder2.spawn();
                     builder2.getEntity().setPassenger(livingEntity);
-                }
+                } else Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
+                        + ChatColor.YELLOW + yml.getString(path + "set_passenger_of")
+                        + ChatColor.RED + "' at '"
+                        + ChatColor.YELLOW + (path + "set_passenger_of")
+                        + ChatColor.RED + "' in '"
+                        + ChatColor.YELLOW + file.getName()
+                        + ChatColor.RED + "' is not an existing custom mob file in.");
             }
 
             if (yml.contains(path + "set_equipment")) {
@@ -249,7 +273,14 @@ public class CodeInterpreter {
                             , builder.getEntity().getLocation().getY() + y
                             , builder.getEntity().getLocation().getZ() + z);
                     particleEffect.display(xd, yd, zd, speed, count, location, 100);
-                }
+                } else
+                    Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
+                            + ChatColor.YELLOW + particles
+                            + ChatColor.RED + "' at '"
+                            + ChatColor.YELLOW + (path + "particles." + particles)
+                            + ChatColor.RED + "' in '"
+                            + ChatColor.YELLOW + file.getName()
+                            + ChatColor.RED + "' is not a valid particle");
             }
 
         if (yml.contains(path + "potion_effects"))
@@ -270,7 +301,14 @@ public class CodeInterpreter {
                         particles = (boolean) injectMatches(yml.get(path1 + "particles"), builder);
 
                     builder.addPotionEffect(new PotionEffect(potionEffectType, duration, amplifier, ambient, particles));
-                }
+                } else
+                    Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
+                            + ChatColor.YELLOW + effectType
+                            + ChatColor.RED + "' at '"
+                            + ChatColor.YELLOW + (path + "potion_effects." + effectType)
+                            + ChatColor.RED + "' in '"
+                            + ChatColor.YELLOW + file.getName()
+                            + ChatColor.RED + "' is not a valid potion effect");
             }
 
         if (yml.contains(path + "run_command")) {
@@ -281,7 +319,7 @@ public class CodeInterpreter {
                 if (yml.getString(path + "run_command.sender").split("=").length > 0)
                     senders = Utils.targetUUIDResolver(yml.getString(path + "run_command.sender").split("=")[1], builder.getEntity());
 
-            if (yml.contains(path + "cmd")) cmd = yml.getString(path + "run_command.cmd");
+            if (yml.contains(path + "run_command.cmd")) cmd = yml.getString(path + "run_command.cmd");
 
             if (!senders.isEmpty())
                 for (Player players : Bukkit.getOnlinePlayers()) {
@@ -297,10 +335,10 @@ public class CodeInterpreter {
             if (yml.contains(path + "send_message.to")) to = yml.getString(path + "send_message.to");
             if (yml.contains(path + "send_message.msg")) msg = yml.getString(path + "send_message.msg");
             List<UUID> entities = Utils.targetUUIDResolver(to, builder.getEntity());
-            for (World world : Bukkit.getWorlds())
-                for (Entity entity : world.getEntities())
-                    if (entities.contains(entity.getUniqueId()))
-                        if (msg != null)
+            if (msg != null)
+                for (World world : Bukkit.getWorlds())
+                    for (Entity entity : world.getEntities())
+                        if (entities.contains(entity.getUniqueId()))
                             entity.sendMessage((String) injectMatches(ChatColor.translateAlternateColorCodes('&', msg), builder));
         }
     }
