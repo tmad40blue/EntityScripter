@@ -17,6 +17,7 @@ public class HeartBeat extends BukkitRunnable {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
                 EntityBuilder builder = new EntityBuilder(entity);
                 interpreter.resolveModule("tick", builder);
+                builder.inject(builder.getEntity());
             });
         }
 
@@ -28,7 +29,6 @@ public class HeartBeat extends BukkitRunnable {
                     EntityBuilder builder = code.create();
                     if (builder != null) {
                         builder.spawn();
-                        // PROBLEM: entity is null here but not anywhere else like the tick resolver above
                         code.resolveModule("properties", builder);
                         builder.inject(builder.getEntity());
                     }

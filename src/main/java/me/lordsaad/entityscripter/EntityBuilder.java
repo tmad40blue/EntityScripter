@@ -38,12 +38,15 @@ public class EntityBuilder {
     public void spawn() {
         if (location != null && file != null) {
             Entity entity = location.getWorld().spawnEntity(location, getEntityType());
+            this.entity = entity;
             inject(entity);
             EntityScripter.mobs.put(entity.getUniqueId(), file);
         }
     }
 
     public void inject(Entity entity) {
+        if (entity == null) return;
+
         entity.setCustomNameVisible(getCustomNameVisible());
 
         if (getCustomName() != null) entity.setCustomName(getCustomName());
