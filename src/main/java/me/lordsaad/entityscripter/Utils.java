@@ -90,6 +90,44 @@ public class Utils {
         return entities;
     }
 
+    public static String targetStringReplacer(String to, Entity entity) {
+        List<String> entities = new ArrayList<>();
+        if (to.contains("@a")) {
+            entities.addAll(Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()));
+            to = to.replace("@a", String.join(",", entities));
+        } else if (to.contains("@damager")) {
+            if (entity != null)
+                if (EntityScripter.lastDamage.containsKey(entity.getUniqueId())) {
+                    entities.addAll(Bukkit.getOnlinePlayers().stream().filter(p -> EntityScripter.lastDamage.get(entity.getUniqueId()).equals(p.getUniqueId())).map(Player::getName).collect(Collectors.toList()));
+                    to = to.replace("@damager", String.join(",", entities));
+                }
+
+        } else if (to.contains("@p")) {
+            if (entity != null) {
+                double closest = Double.MAX_VALUE;
+                Player closestp = null;
+                for (Player i : Bukkit.getOnlinePlayers()) {
+                    double dist = i.getLocation().distance(entity.getLocation());
+                    if (closest == Double.MAX_VALUE || dist < closest) {
+                        closest = dist;
+                        closestp = i;
+                    }
+                }
+                if (closestp != null) to = to.replace("@p", closestp.getName());
+            }
+
+        } else if (to.contains("@r")) {
+            if (entity != null) {
+                if (StringUtils.isNumeric(to.split("=")[1])) {
+                    double radius = Double.parseDouble(to.split("=")[1]);
+                    entities.addAll(entity.getNearbyEntities(radius, radius, radius).stream().filter(entity1 -> entity1 instanceof Player).map(Entity::getName).collect(Collectors.toList()));
+                    to = to.replace("@r", String.join(",", entities));
+                }
+            }
+        }
+        return to;
+    }
+
     public static String getEquipmentType(Material mat) {
         if (mat == Material.DIAMOND_BOOTS
                 || mat == Material.CHAINMAIL_BOOTS

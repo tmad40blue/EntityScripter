@@ -241,7 +241,6 @@ public class CodeInterpreter {
         if (builder.getEntity() == null) return;
 
         if (yml.contains(path + "particles"))
-
             for (String particles : yml.getConfigurationSection(path + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
                 if (particleEffect != null) {
@@ -268,7 +267,6 @@ public class CodeInterpreter {
                             , builder.getEntity().getLocation().getY() + y
                             , builder.getEntity().getLocation().getZ() + z);
                     particleEffect.display(xd, yd, zd, speed, count, location, 100);
-
                 } else
                     Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
                             + ChatColor.YELLOW + particles
@@ -335,7 +333,7 @@ public class CodeInterpreter {
                 for (World world : Bukkit.getWorlds())
                     for (Entity entity : world.getEntities())
                         if (entities.contains(entity.getUniqueId()))
-                            entity.sendMessage((String) injectMatches(ChatColor.translateAlternateColorCodes('&', msg), builder));
+                            entity.sendMessage(ChatColor.translateAlternateColorCodes('&', String.valueOf(injectMatches(msg, builder))));
         }
     }
 
@@ -373,37 +371,36 @@ public class CodeInterpreter {
 
     public Object injectMatches(Object obj, EntityBuilder builder) {
         injectMatches(obj);
-        if (builder.getEntity() != null) {
+        if (builder.getEntity() == null) return obj;
             if (obj instanceof String) {
                 String string = (String) obj;
 
                 if (string.contains("%location%"))
-                    return string.replace("%location%", LocationHandler.toString(builder.getLocation()));
+                    string = string.replace("%location%", LocationHandler.toString(builder.getLocation()));
 
                 if (string.contains("%location_x%"))
-                    return string.replace("%location_x%", builder.getLocation().getBlockX() + "");
+                    string = string.replace("%location_x%", builder.getLocation().getBlockX() + "");
 
                 if (string.contains("%location_y%"))
-                    return string.replace("%location_y%", builder.getLocation().getBlockY() + "");
+                    string = string.replace("%location_y%", builder.getLocation().getBlockY() + "");
 
                 if (string.contains("%location_z%"))
-                    return string.replace("%location_z%", builder.getLocation().getBlockZ() + "");
+                    string = string.replace("%location_z%", builder.getLocation().getBlockZ() + "");
 
                 if (string.contains("%location_world%"))
-                    return string.replace("%location_world%", builder.getLocation().getWorld().getName() + "");
+                    string = string.replace("%location_world%", builder.getLocation().getWorld().getName() + "");
 
                 if (string.contains("%entity_type%"))
-                    return string.replace("%entity_type%", builder.getEntityType().name());
+                    string = string.replace("%entity_type%", builder.getEntityType().name());
 
                 if (string.contains("%name%"))
-                    return string.replace("%name%", builder.getCustomName());
+                    string = string.replace("%name%", builder.getCustomName());
 
                 if (string.contains("%entity_type%"))
-                    return string.replace("%entity_type%", builder.getEntityType().name());
+                    string = string.replace("%entity_type%", builder.getEntityType().name());
 
-                else return String.join(", ", Utils.targetStringResolver(string, builder.getEntity()));
+                return Utils.targetStringReplacer(string, builder.getEntity());
             }
-        }
         return obj;
     }
 }
