@@ -60,14 +60,6 @@ public class CodeInterpreter {
     private void matcher(String path, EntityBuilder builder) {
         if (yml.contains(path + "set_entity_type"))
             builder.setEntityType(EntityType.valueOf(yml.getString(path + "set_entity_type").toUpperCase()));
-        else {
-            Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] Entity type not specified for '"
-                    + ChatColor.YELLOW + file.getName()
-                    + ChatColor.RED + "' at"
-                    + ChatColor.YELLOW + (path + "set_entity_type")
-                    + ChatColor.RED + "'.");
-            return;
-        }
 
         if (yml.contains(path + "set_custom_name"))
             builder.setCustomName(ChatColor.translateAlternateColorCodes('&', yml.getString(path + "set_custom_name")));
@@ -176,11 +168,14 @@ public class CodeInterpreter {
             if (yml.contains(path + "set_despawnable"))
                 livingEntity.setRemoveWhenFarAway(yml.getBoolean(path + "set_despawnable"));
             if (yml.contains(path + "set_passenger_of")) {
-                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path + "set_passenger_of") + ".txt");
+                File f = new File(EntityScripter.plugin.getDataFolder(), "/mobs/" + yml.getString(path + "set_passenger_of") + ".yml");
                 if (f.exists()) {
                     CodeInterpreter interpreter = new CodeInterpreter(f);
                     EntityBuilder builder2 = interpreter.create();
+                    builder2.setLocation(entity.getLocation());
                     builder2.spawn();
+                    interpreter.resolveModule("properties", builder2);
+                    builder2.inject(builder2.getEntity());
                     builder2.getEntity().setPassenger(livingEntity);
                 } else Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
                         + ChatColor.YELLOW + yml.getString(path + "set_passenger_of")
@@ -191,9 +186,7 @@ public class CodeInterpreter {
                         + ChatColor.RED + "' is not an existing custom mob file in.");
             }
 
-            if (yml.contains(path + "set_equipment")) {
-                ((LivingEntity) entity).getEquipment().clear();
-
+            if (yml.contains(path + "set_equipment"))
                 for (String equipment : yml.getConfigurationSection(path + "set_equipment").getKeys(false)) {
                     Random random = new Random();
                     ItemStack item = new ItemStack(Material.AIR);
@@ -241,7 +234,6 @@ public class CodeInterpreter {
                             livingEntity.getEquipment().setItemInHand(item);
                     }
                 }
-            }
         }
     }
 
@@ -249,6 +241,7 @@ public class CodeInterpreter {
         if (builder.getEntity() == null) return;
 
         if (yml.contains(path + "particles"))
+
             for (String particles : yml.getConfigurationSection(path + "particles").getKeys(false)) {
                 ParticleEffect particleEffect = ParticleEffect.fromName(particles);
                 if (particleEffect != null) {
@@ -256,6 +249,7 @@ public class CodeInterpreter {
                     double x = 0, y = 0, z = 0;
                     int count = 10;
                     float xd = 0, yd = 0, zd = 0, speed = 0;
+
                     if (yml.contains(path1 + "x")) x = (double) injectMatches(yml.get(path1 + "x"), builder);
                     if (yml.contains(path1 + "y")) y = (double) injectMatches(yml.get(path1 + "y"), builder);
                     if (yml.contains(path1 + "z")) z = (double) injectMatches(yml.get(path1 + "z"), builder);
@@ -268,11 +262,13 @@ public class CodeInterpreter {
                     if (yml.contains(path1 + "speed"))
                         speed = ((Double) injectMatches(yml.get(path1 + "speed"), builder)).floatValue();
                     if (yml.contains(path1 + "count")) count = (int) injectMatches(yml.get(path1 + "count"), builder);
+
                     Location location = new Location(builder.getEntity().getLocation().getWorld()
                             , builder.getEntity().getLocation().getX() + x
                             , builder.getEntity().getLocation().getY() + y
                             , builder.getEntity().getLocation().getZ() + z);
                     particleEffect.display(xd, yd, zd, speed, count, location, 100);
+
                 } else
                     Bukkit.broadcastMessage(ChatColor.RED + "[ERROR] '"
                             + ChatColor.YELLOW + particles

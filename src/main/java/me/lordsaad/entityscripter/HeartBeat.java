@@ -15,7 +15,7 @@ public class HeartBeat extends BukkitRunnable {
         for (World world : Bukkit.getWorlds()) {
             world.getEntities().stream().filter(entity -> EntityScripter.mobs.containsKey(entity.getUniqueId())).forEach(entity -> {
                 CodeInterpreter interpreter = new CodeInterpreter(EntityScripter.mobs.get(entity.getUniqueId()));
-                EntityBuilder builder = new EntityBuilder(entity);
+                EntityBuilder builder = new EntityBuilder(entity, EntityScripter.mobs.get(entity.getUniqueId()));
                 interpreter.resolveModule("tick", builder);
                 builder.inject(builder.getEntity());
             });

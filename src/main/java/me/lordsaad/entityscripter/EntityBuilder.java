@@ -31,16 +31,34 @@ public class EntityBuilder {
     public EntityBuilder() {
     }
 
-    public EntityBuilder(Entity entity) {
-        this.entity = entity;
+    public EntityBuilder(Entity entity, File file) {
+        if (entity != null) {
+            this.entity = entity;
+            this.location = entity.getLocation();
+            this.customName = entity.getCustomName();
+            this.customNameVisible = entity.isCustomNameVisible();
+            this.entityType = entity.getType();
+            this.file = file;
+            if (entity instanceof LivingEntity) {
+                this.potionEffects = (List<PotionEffect>) ((LivingEntity) entity).getActivePotionEffects();
+            }
+        }
     }
 
     public void spawn() {
-        if (location != null && file != null) {
-            Entity entity = location.getWorld().spawnEntity(location, getEntityType());
+        if (location != null && file != null && entityType != null) {
+            Entity entity = location.getWorld().spawnEntity(location, entityType);
             this.entity = entity;
             inject(entity);
             EntityScripter.mobs.put(entity.getUniqueId(), file);
+            if (entity instanceof LivingEntity) {
+                ((LivingEntity) entity).getEquipment().clear();
+                ((LivingEntity) entity).getEquipment().setItemInHand(null);
+                ((LivingEntity) entity).getEquipment().setChestplate(null);
+                ((LivingEntity) entity).getEquipment().setHelmet(null);
+                ((LivingEntity) entity).getEquipment().setLeggings(null);
+                ((LivingEntity) entity).getEquipment().setBoots(null);
+            }
         }
     }
 

@@ -1,11 +1,11 @@
 author: LordSaad
 description: Code your own custom entities!
 main: me.lordsaad.entityscripter.EntityScripter
-name: Entity_Scripter
+name: EntityScripter
 version: 1.0
 depend: [BKCommonLib]
 commands:
   spawnmob:
-    description: Spawn your custom mob!
+    description: Spawn your custom mob manually.
     aliases: [sm]
     permission: entityscripter.spawn
